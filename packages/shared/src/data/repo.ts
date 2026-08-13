@@ -52,6 +52,7 @@ export function toDriver(r: Row): DriverProfile {
   return {
     id: r.id,
     name: r.name,
+    phone: r.phone ?? undefined,
     rating: r.rating ?? 0,
     totalRides: r.total_rides ?? 0,
     online: r.online ?? false,

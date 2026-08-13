@@ -4,7 +4,7 @@
 // italic), call/message secondaries + rose safety shield.
 
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatClock, startTrip } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
@@ -33,10 +33,14 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
 
   if (!job) return <ScreenContainer />;
 
-  const name = driver?.name ?? 'Marisol A.';
+  // NOTHING on this screen falls back to invented values. It is the
+  // identification moment: the rider matches this name, car and plate against
+  // a vehicle at the kerb before getting in. A default plate or car colour
+  // could walk someone into the wrong car.
+  const name = driver?.name ?? '';
   const firstName = name.split(' ')[0];
   const rideLine = driver ? `${driver.rating.toFixed(2)} ★ · ${thousands(driver.totalRides)} rides` : '';
-  const carLine = vehicle ? `${vehicle.colour} ${vehicle.make} ${vehicle.model}` : 'Silver Toyota Corolla';
+  const carLine = vehicle ? `${vehicle.colour} ${vehicle.make} ${vehicle.model}` : '';
 
   return (
     <ScreenContainer
@@ -50,7 +54,7 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
         Arrived · {formatClock(job.updatedAt)} · {job.pickup.address}
       </LuminaText>
       <LuminaText token="h1" style={{ marginTop: spacing.sm }}>
-        {firstName} is at the pickup
+        {firstName ? `${firstName} is at the pickup` : 'Your driver is at the pickup'}
       </LuminaText>
 
       {/* Who's picking you up — driver, car, plate and the note they were
@@ -79,7 +83,9 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
               </LuminaText>
             </View>
           </View>
-          <PlateChip plate={vehicle?.plate ?? 'KB 41 508'} style={{ marginTop: spacing.md }} />
+          {vehicle?.plate ? (
+            <PlateChip plate={vehicle.plate} style={{ marginTop: spacing.md }} />
+          ) : null}
 
           {job.noteToDriver ? (
             <View
@@ -106,8 +112,27 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
       </View>
 
       <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl }}>
-        <NeuButton variant="secondary" title="Call" onPress={() => {}} style={{ flex: 1 }} />
-        <NeuButton variant="secondary" title="Message" onPress={() => {}} style={{ flex: 1 }} />
+        {/* Real handoffs to the dialer and SMS app. The driver's number is
+            readable only while this rider shares a live job with them. Both
+            hide rather than sit dead when it is not available. */}
+        {driver?.phone ? (
+          <>
+            <NeuButton
+              variant="secondary"
+              title="Call"
+              onPress={() => void Linking.openURL(`tel:${driver.phone}`)}
+              accessibilityLabel={`Call ${firstName}`}
+              style={{ flex: 1 }}
+            />
+            <NeuButton
+              variant="secondary"
+              title="Message"
+              onPress={() => void Linking.openURL(`sms:${driver.phone}`)}
+              accessibilityLabel={`Message ${firstName}`}
+              style={{ flex: 1 }}
+            />
+          </>
+        ) : null}
         <SafetyShield onPress={() => setSafetyOpen(true)} />
       </View>
 
@@ -140,7 +165,12 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
         />
       </View>
 
-      <SafetyOverlay visible={safetyOpen} onClose={() => setSafetyOpen(false)} />
+      <SafetyOverlay
+        visible={safetyOpen}
+        onClose={() => setSafetyOpen(false)}
+        jobId={jobId}
+        reporterId={job.customerId}
+      />
     </ScreenContainer>
   );
 }

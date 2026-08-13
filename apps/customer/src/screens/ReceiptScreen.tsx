@@ -149,8 +149,15 @@ export function ReceiptScreen({ navigation, route }: ScreenProps<'Receipt'>) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: 'auto', paddingTop: spacing['2xl'] }}>
-          <NeuButton variant="secondary" title="PDF" onPress={() => {}} style={{ flex: 1 }} />
-          <NeuButton title="Done" onPress={() => navigation.popToTop()} style={{ flex: 2 }} />
+          {/* The PDF button did nothing. There is no document generator and no
+              file sharing, so it is gone rather than sitting dead — a receipt
+              screen is exactly where someone taps expecting a real artefact. */}
+          <NeuButton
+            title="Done"
+            onPress={() => navigation.popToTop()}
+            accessibilityLabel="Done"
+            style={{ flex: 1 }}
+          />
         </View>
       </ScrollView>
     </ScreenContainer>

@@ -58,3 +58,15 @@ export const UPGRADE_AT_QUOTE = {
 // Add-stop is a priced amendment (decided 2026-08-12) and is unavailable on
 // pooled tiers — another rider's promise is in the car.
 export const ADD_STOP_DISALLOWED_TIERS = ['share'] as const;
+
+// ⚠ LAUNCH BLOCKER — MUST be set before real riders use the app.
+//
+// The emergency number for the operating country, in E.164. Deliberately null:
+// the safety sheet HIDES its emergency action while this is unset, because a
+// button labelled "Call emergency services" that dials a wrong number is worse
+// than no button at all — someone would press it in the one moment they cannot
+// afford a second attempt.
+//
+// Set it to the confirmed national emergency number for Papua New Guinea. Do
+// not guess it, and do not copy it from another country's app.
+export const EMERGENCY_NUMBER: string | null = null;

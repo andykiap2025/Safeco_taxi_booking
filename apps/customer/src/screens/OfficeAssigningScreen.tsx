@@ -198,7 +198,7 @@ export function OfficeAssigningScreen({ navigation, route }: ScreenProps<'Office
           The Office is assigning your car
         </LuminaText>
         <LuminaText token="body" color={colors.text.secondary} style={{ marginTop: spacing.md }}>
-          {dispatcherName} picks the nearest free driver and sends them to 14 Kingsway. Your {fare} fare
+          {dispatcherName} picks a free driver and sends them to {job.pickup.address}. Your {fare} fare
           is already locked.
         </LuminaText>
 

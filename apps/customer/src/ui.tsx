@@ -3,9 +3,10 @@
 // Every color comes from the lumina tokens (no raw literals); rose is the
 // safety/alert voice — no teal inside a safety surface.
 
-import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState } from 'react';
+import { Linking, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import type { RouteEstimate } from '@safeco/shared';
+import { EMERGENCY_NUMBER, logJobEvent, type RouteEstimate } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
 import { GlassModal, LuminaText, withOpacity } from '@safeco/shared/ui';
 
@@ -142,15 +143,59 @@ export function SafetyShield({ onPress, style }: { onPress?: () => void; style?:
   );
 }
 
-const SAFETY_ROWS = [
-  'Call emergency services',
-  'Share live trip with a contact',
-  'Report an issue to the Office',
-] as const;
+/**
+ * Safety sheet.
+ *
+ * Every row here used to call onClose() and nothing else — including "Call
+ * emergency services". A safety control that silently does nothing is worse
+ * than an absent one, because someone relies on it in the one moment they
+ * cannot afford to discover it is decorative.
+ *
+ * Now: the emergency row dials for real, and is HIDDEN entirely while
+ * EMERGENCY_NUMBER is unset rather than dialling a guess. Reporting writes a
+ * job_event, so the Office genuinely sees it on the job's timeline. Sharing a
+ * live trip is gone — there is no tracking link to share.
+ */
+export function SafetyOverlay({
+  visible,
+  onClose,
+  jobId,
+  reporterId,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  /** When given, "Report an issue" is recorded against this job. */
+  jobId?: string;
+  reporterId?: string;
+}) {
+  const [reported, setReported] = useState(false);
 
-export function SafetyOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  // The GlassModal sheet is a light surface: context ink for plain rows,
-  // rose stays the safety accent, separators in ink.
+  const report = async () => {
+    if (!jobId) return;
+    try {
+      await logJobEvent(jobId, reporterId, 'issue_reported');
+      setReported(true);
+    } catch {
+      // logJobEvent already swallows; this is belt and braces.
+      setReported(true);
+    }
+  };
+
+  const rows: Array<{ label: string; onPress: () => void; danger?: boolean }> = [];
+  if (EMERGENCY_NUMBER) {
+    rows.push({
+      label: 'Call emergency services',
+      danger: true,
+      onPress: () => void Linking.openURL(`tel:${EMERGENCY_NUMBER}`),
+    });
+  }
+  if (jobId) {
+    rows.push({
+      label: reported ? 'Reported — the Office has been told' : 'Report an issue to the Office',
+      onPress: () => void report(),
+    });
+  }
+
   return (
     <GlassModal visible={visible} onClose={onClose}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
@@ -160,28 +205,41 @@ export function SafetyOverlay({ visible, onClose }: { visible: boolean; onClose:
         </LuminaText>
       </View>
       <LuminaText token="h2" style={{ marginTop: spacing.sm }}>
-        You're covered
+        Safety
       </LuminaText>
-      <View style={{ marginTop: spacing.sm }}>
-        {SAFETY_ROWS.map((label, i) => (
-          <Pressable
-            key={label}
-            accessibilityRole="button"
-            accessibilityLabel={label}
-            onPress={onClose}
-            style={{
-              minHeight: touchTarget,
-              justifyContent: 'center',
-              borderBottomWidth: i === SAFETY_ROWS.length - 1 ? 0 : borders.hairline,
-              borderBottomColor: colors.surface.separator,
-            }}
-          >
-            <LuminaText token="listTitle" color={i === 0 ? colors.accent.rose : undefined}>
-              {label}
-            </LuminaText>
-          </Pressable>
-        ))}
-      </View>
+
+      {rows.length === 0 ? (
+        <LuminaText
+          token="body"
+          color={colors.onSurface.secondary}
+          style={{ marginTop: spacing.sm }}
+        >
+          Safety tools aren't set up yet. In an emergency, call your local emergency number
+          directly from your phone.
+        </LuminaText>
+      ) : (
+        <View style={{ marginTop: spacing.sm }}>
+          {rows.map((row, i) => (
+            <Pressable
+              key={row.label}
+              accessibilityRole="button"
+              accessibilityLabel={row.label}
+              onPress={row.onPress}
+              style={{
+                minHeight: touchTarget,
+                justifyContent: 'center',
+                borderBottomWidth: i === rows.length - 1 ? 0 : borders.hairline,
+                borderBottomColor: colors.surface.separator,
+              }}
+            >
+              <LuminaText token="listTitle" color={row.danger ? colors.accent.rose : undefined}>
+                {row.label}
+              </LuminaText>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <GhostButton
         title="Close"
         color={colors.onSurface.muted}

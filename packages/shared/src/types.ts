@@ -103,6 +103,9 @@ export interface Vehicle {
 export interface DriverProfile {
   id: string;
   name: string;
+  /** E.164. Readable by the rider only while they share a live job (RLS
+   *  shares_job_with), which is what makes the Call button possible. */
+  phone?: string;
   rating: number;
   totalRides: number;
   online: boolean;

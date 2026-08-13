@@ -26,7 +26,7 @@ import {
   NeuButton,
   ScreenContainer,
 } from '@safeco/shared/ui';
-import { STOP_DETOUR, SafetyOverlay, ShareIcon, ShieldIcon } from '../ui';
+import { STOP_DETOUR, SafetyOverlay, ShieldIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
 
 // Map-dominant: the plate takes ~460dp; the sheet overlaps its lower edge.
@@ -49,7 +49,12 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
-      <MapPlate height={MAP_HEIGHT} route car label="en route · 8 rowan st" />
+      <MapPlate
+        height={MAP_HEIGHT}
+        route
+        car
+        label={`en route · ${job.dropoff.address.toLowerCase()}`}
+      />
 
       {/* Bottom sheet — floating elevated glass */}
       <View
@@ -87,11 +92,8 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
             Fare locked · {formatMoney(job.quotedFare.total)}
           </LuminaText>
 
-          <GlassListItem
-            title="Share live trip"
-            icon={<ShareIcon />}
-            onPress={() => setSafetyOpen(true)}
-          />
+          {/* "Share live trip" is gone: it opened the safety sheet and shared
+              nothing. Sharing needs a trackable link, which needs location. */}
           {showAddStop ? (
             <GlassListItem
               title="Add a stop"
@@ -100,16 +102,9 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
               onPress={() => setStopOpen(true)}
             />
           ) : null}
-          <GlassListItem
-            title="Quiet ride requested"
-            icon="◦"
-            iconColor={colors.onSurface.muted}
-            trailing={
-              <LuminaText token="overline" color={colors.onSurface.muted}>
-                On
-              </LuminaText>
-            }
-          />
+          {/* "Quiet ride requested · On" claimed a preference that was never
+              stored and never sent to the driver. Removed until ride
+              preferences exist on the job. */}
           <GlassListItem
             title="Safety tools"
             icon={<ShieldIcon size={20} />}
@@ -179,7 +174,12 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
         />
       </GlassModal>
 
-      <SafetyOverlay visible={safetyOpen} onClose={() => setSafetyOpen(false)} />
+      <SafetyOverlay
+        visible={safetyOpen}
+        onClose={() => setSafetyOpen(false)}
+        jobId={jobId}
+        reporterId={job.customerId}
+      />
     </ScreenContainer>
   );
 }

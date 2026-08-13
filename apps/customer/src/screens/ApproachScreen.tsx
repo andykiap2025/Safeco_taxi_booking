@@ -4,7 +4,7 @@
 // Tapping the sheet expands the Office timeline and the call/safety row.
 
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchJobEvents, formatClock, type JobEvent } from '@safeco/shared';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
@@ -107,7 +107,7 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
               <LuminaText token="h3" numberOfLines={1} style={{ flex: 1 }}>
                 {driverName} · {carLine}
               </LuminaText>
-              <PlateChip plate={vehicle?.plate ?? 'KB 41 508'} />
+              {vehicle?.plate ? <PlateChip plate={vehicle.plate} /> : null}
             </View>
             <LuminaText
               token="overline"
@@ -159,12 +159,18 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
                 ))
               )}
               <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
-                <NeuButton
-                  variant="secondary"
-                  title="Call Marisol"
-                  onPress={() => {}}
-                  style={{ flex: 1 }}
-                />
+                {/* Was "Call Marisol" with a dead handler — the wrong name and
+                    no call. Real dialer handoff, hidden when there is no
+                    number to ring. */}
+                {driver?.phone ? (
+                  <NeuButton
+                    variant="secondary"
+                    title={driverName ? `Call ${driverName.split(' ')[0]}` : 'Call driver'}
+                    onPress={() => void Linking.openURL(`tel:${driver.phone}`)}
+                    accessibilityLabel="Call your driver"
+                    style={{ flex: 1 }}
+                  />
+                ) : null}
                 <SafetyShield onPress={() => setSafetyOpen(true)} />
               </View>
             </View>
@@ -179,7 +185,12 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
         </GlassCard>
       </View>
 
-      <SafetyOverlay visible={safetyOpen} onClose={() => setSafetyOpen(false)} />
+      <SafetyOverlay
+        visible={safetyOpen}
+        onClose={() => setSafetyOpen(false)}
+        jobId={jobId}
+        reporterId={job.customerId}
+      />
     </ScreenContainer>
   );
 }
