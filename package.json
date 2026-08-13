@@ -9,6 +9,8 @@
   "scripts": {
     "driver": "npm run start --workspace driver",
     "driver:android": "npm run android --workspace driver",
-    "driver:ios": "npm run ios --workspace driver"
+    "driver:ios": "npm run ios --workspace driver",
+    "test": "npm run test --workspace @safeco/shared",
+    "typecheck": "npm run typecheck --workspace customer && npm run typecheck --workspace driver && npm run typecheck --workspace admin"
   }
 }

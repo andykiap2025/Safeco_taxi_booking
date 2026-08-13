@@ -76,16 +76,24 @@ export function tierById(id: TierId) {
 
 export function computeQuote(route: RouteEstimate, tierId: TierId): FareBreakdown {
   const tier = tierById(tierId);
-  const base = FARE_RATES.base * tier.fareMultiplier;
-  const distance = FARE_RATES.perKm * route.distanceKm * tier.fareMultiplier;
-  const time = FARE_RATES.perMin * route.durationMin * tier.fareMultiplier;
-  const total = roundStep(base + distance + time + FARE_RATES.cityLevy);
+
+  // The total is summed from the ROUNDED components, not from the raw ones.
+  // Rounding each line and the total independently let them disagree: a
+  // 0.5 km Share ride itemised to K4.35 while charging K4.30. An itemised
+  // bill whose lines do not add up to the amount charged is indefensible the
+  // first time a customer checks it — and Safeco's whole promise is that
+  // every charge traces to something they were shown.
+  const base = roundStep(FARE_RATES.base * tier.fareMultiplier);
+  const distance = roundStep(FARE_RATES.perKm * route.distanceKm * tier.fareMultiplier);
+  const time = roundStep(FARE_RATES.perMin * route.durationMin * tier.fareMultiplier);
+  const cityLevy = FARE_RATES.cityLevy;
+
   return {
-    base: roundStep(base),
-    distance: roundStep(distance),
-    time: roundStep(time),
-    cityLevy: FARE_RATES.cityLevy,
-    total,
+    base,
+    distance,
+    time,
+    cityLevy,
+    total: Math.round((base + distance + time + cityLevy) * 100) / 100,
     currency: FARE_RATES.currency,
   };
 }

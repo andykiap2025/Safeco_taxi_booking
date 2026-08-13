@@ -178,6 +178,14 @@ User feedback: the Broadsheet newsprint styling "looks like a newspaper cutting 
 - Spacing scale 5/10/15/20/30/40; radii 1/2/4 (2px default); tap targets ≥48px.
 - Shadows in the export were flat-minimal; they are superseded by the elevation scale above.
 
+## Tests (added 2026-08-14)
+
+`npm test` (vitest, in `@safeco/shared`) and `npm run typecheck` (all three apps); both run in CI on every push and PR.
+
+- Coverage is deliberately narrow: the **fare engine** and the **assignment rules**. They are pure functions and they encode the commercial promises — fixed fare, itemised receipt, one-tier-up upgrades gated on seats — so they are worth far more per test than screen coverage.
+- **Write tests as promises, not as implementation.** "itemises to the total it charges" and "never reduces a locked fare" survive a refactor; a test asserting a specific multiplier does not.
+- The first run found a real bug: `computeQuote` rounded each component but summed the total from the *unrounded* values, so a receipt's lines could disagree with the amount charged (K4.35 of lines against a K4.30 total). The total is now summed from the rounded components.
+
 ## Open decisions
 
 - Real tier list (name, description, price basis per tier) — user to supply; provisional Go/XL/Share stands in until then (encoded in `packages/shared/src/constants.ts` `TIERS`). Tier-screen layout is already settled: stacked cards.
