@@ -11,8 +11,11 @@ import {
   ADD_STOP_DISALLOWED_TIERS,
   amendedTotal,
   confirmAmendment,
+  estimateRoute,
+  formatDistance,
   formatDuration,
   formatMoney,
+  type SavedPlace,
   type TierId,
 } from '@safeco/shared';
 import { colors, spacing } from '@safeco/shared/lumina';
@@ -26,7 +29,7 @@ import {
   NeuButton,
   ScreenContainer,
 } from '@safeco/shared/ui';
-import { STOP_DETOUR, SafetyOverlay, ShieldIcon } from '../ui';
+import { PlacePicker, SafetyOverlay, ShieldIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
 
 // Map-dominant: the plate takes ~460dp; the sheet overlaps its lower edge.
@@ -35,10 +38,12 @@ const MAP_HEIGHT = 460;
 export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
-  const [stopOpen, setStopOpen] = useState(false);
+  const [stopPicking, setStopPicking] = useState(false);
+  const [stop, setStop] = useState<SavedPlace | undefined>();
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [amending, setAmending] = useState(false);
   const [amendError, setAmendError] = useState<string | null>(null);
+  const places = useAppState((s) => s.places);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
 
@@ -51,7 +56,27 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
 
   const addStopAllowed = !(ADD_STOP_DISALLOWED_TIERS as readonly TierId[]).includes(job.tier);
   const showAddStop = addStopAllowed && !(job.stops && job.stops.length > 0);
-  const newTotal = amendedTotal(job.quotedFare, STOP_DETOUR, job.tier);
+
+  // The detour a stop actually adds: pickup → stop → destination, minus the
+  // direct journey. Was a fixed "1.1 km · 4 min" regardless of where the stop
+  // was, which meant the amendment charged the same for a detour round the
+  // corner and one across town.
+  const legOne = estimateRoute(job.pickup.location, stop?.location);
+  const legTwo = estimateRoute(stop?.location, job.dropoff.location);
+  const detour =
+    legOne && legTwo && job.route
+      ? {
+          distanceKm:
+            Math.round(
+              Math.max(0, legOne.distanceKm + legTwo.distanceKm - job.route.distanceKm) * 10,
+            ) / 10,
+          durationMin: Math.max(
+            0,
+            Math.round(legOne.durationMin + legTwo.durationMin - job.route.durationMin),
+          ),
+        }
+      : undefined;
+  const newTotal = detour ? amendedTotal(job.quotedFare, detour, job.tier) : undefined;
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
@@ -105,7 +130,7 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
               title="Add a stop"
               subtitle="Priced before you confirm"
               icon="+"
-              onPress={() => setStopOpen(true)}
+              onPress={() => setStopPicking(true)}
             />
           ) : null}
           {/* "Quiet ride requested · On" claimed a preference that was never
@@ -132,24 +157,52 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
         </GlassCard>
       </View>
 
-      {/* Add-a-stop priced amendment */}
-      <GlassModal visible={stopOpen} onClose={() => setStopOpen(false)}>
+      {/* Choose where the stop is, from the same service map as booking. */}
+      <PlacePicker
+        visible={stopPicking}
+        title="Stop at"
+        places={places}
+        excludeId={undefined}
+        onSelect={(p) => setStop(p)}
+        onClose={() => setStopPicking(false)}
+      />
+
+      {/* Add-a-stop priced amendment. Shown only once a stop is chosen and a
+          detour could be measured — the customer must see the real figure
+          before anything changes (CLAUDE.md "Fare amendments"). */}
+      <GlassModal visible={!!stop} onClose={() => setStop(undefined)}>
         <LuminaText token="overline" color={colors.onSurface.muted}>
           Priced amendment
         </LuminaText>
         <LuminaText token="h3" style={{ marginTop: spacing.sm }}>
-          Stop at Rowan St Market
+          Stop at {stop?.name}
         </LuminaText>
-        <LuminaText token="bodySmall" color={colors.onSurface.muted} style={{ marginTop: spacing.xs }}>
-          Adds 1.1 km · 4 min to the route.
-        </LuminaText>
-        <LuminaText token="h2" style={{ marginTop: spacing.md }}>
-          New fare {formatMoney(newTotal)}{' '}
-          <LuminaText token="bodySmall" color={colors.onSurface.muted}>
-            (was {formatMoney(job.quotedFare.total)})
-          </LuminaText>{' '}
-          · fixed
-        </LuminaText>
+        {detour ? (
+          <LuminaText
+            token="bodySmall"
+            color={colors.onSurface.muted}
+            style={{ marginTop: spacing.xs }}
+          >
+            Adds {formatDistance(detour)} · {formatDuration(detour)} to the route.
+          </LuminaText>
+        ) : (
+          <LuminaText
+            token="bodySmall"
+            color={colors.onSurface.muted}
+            style={{ marginTop: spacing.xs }}
+          >
+            We can't measure this detour, so we can't quote a new fixed fare for it.
+          </LuminaText>
+        )}
+        {newTotal !== undefined ? (
+          <LuminaText token="h2" style={{ marginTop: spacing.md }}>
+            New fare {formatMoney(newTotal)}{' '}
+            <LuminaText token="bodySmall" color={colors.onSurface.muted}>
+              (was {formatMoney(job.quotedFare.total)})
+            </LuminaText>{' '}
+            · fixed
+          </LuminaText>
+        ) : null}
         {amendError ? (
           <InlineError
             title="Could not change the fare"
@@ -162,16 +215,21 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
           <NeuButton
             title="Confirm new fare"
             loading={amending}
-            disabled={amending}
+            disabled={amending || newTotal === undefined}
             accessibilityLabel="Confirm new fare"
             onPress={async () => {
+              if (!stop || newTotal === undefined) return;
               setAmendError(null);
               setAmending(true);
               try {
                 // The ONLY path that changes a locked fare, and it only runs
                 // after the customer has seen this exact figure (CLAUDE.md).
-                await confirmAmendment(job, { address: 'Rowan St Market' }, newTotal);
-                setStopOpen(false);
+                await confirmAmendment(
+                  job,
+                  { address: stop.name, location: stop.location },
+                  newTotal,
+                );
+                setStop(undefined);
               } catch (e) {
                 setAmendError((e as Error).message);
               } finally {
@@ -183,7 +241,8 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
         <NeuButton
           variant="secondary"
           title="Keep original"
-          onPress={() => setStopOpen(false)}
+          onPress={() => setStop(undefined)}
+          accessibilityLabel="Keep original fare"
           style={{ marginTop: spacing.md }}
         />
       </GlassModal>

@@ -15,16 +15,9 @@ import {
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
 import { GlassModal, LuminaText, withOpacity } from '@safeco/shared/ui';
 
-// The one route used throughout the mock flow: 14 Kingsway → 8 Rowan St.
-export const ROUTE: RouteEstimate = { distanceKm: 4.2, durationMin: 12 };
-
-// Detour for the add-stop priced amendment (Rowan St Market).
-export const STOP_DETOUR: RouteEstimate = { distanceKm: 1.1, durationMin: 4 };
-
-// 14 Kingsway → International, T2 — the scheduled airport run. Chosen so the
-// XL quote lands at K31.40, preserving the figure the design export showed on
-// this card rather than silently re-pricing it.
-export const AIRPORT_ROUTE: RouteEstimate = { distanceKm: 9.4, durationMin: 22 };
+// Fixed route constants used to live here — one 4.2 km journey every rider
+// took, a 1.1 km detour for every stop, and a hand-tuned airport run. All
+// three are gone: routes are now estimated between chosen places.
 
 // Local alpha tuning (token + alpha via withOpacity only).
 const PLATE_BORDER_ALPHA = 0.35;

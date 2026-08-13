@@ -26,14 +26,16 @@ import {
   GlassGroup,
   GlassListItem,
   InlineError,
+  InsetInput,
   LuminaText,
   NeuButton,
   ScreenContainer,
 } from '@safeco/shared/ui';
-import { ROUTE } from '../ui';
 import type { ScreenProps } from '../navigation';
 
 const SORTED_TIERS = [...TIERS].sort((a, b) => a.sortOrder - b.sortOrder);
+// Long enough for "Blue gate past the church", short enough to read at a kerb.
+const NOTE_MAX = 140;
 
 export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'>) {
   const { pickupId, dropoffId } = route.params;
@@ -41,6 +43,7 @@ export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'
   const { profile } = useAuth();
   const [tierId, setTierId] = useState<TierId>('go');
   const [booking, setBooking] = useState(false);
+  const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const pickup = useAppState((s) => s.places.find((p) => p.id === pickupId));
@@ -69,6 +72,7 @@ export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'
         // fare was computed from.
         route: journey,
         quotedFare: quote,
+        noteToDriver: note.trim() || undefined,
       });
       navigation.navigate('OfficeAssigning', { jobId: job.id });
     } catch (e) {
@@ -133,6 +137,26 @@ export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'
             </View>
           );
         })}
+
+        {/* The note the driver is shown at pickup. Booking used to send a
+            fixed "Waiting by the newsstand on the corner." on every ride —
+            removed, which left riders no way to say anything at all. */}
+        <View style={{ marginTop: spacing.xl }}>
+          <GlassCard>
+            <LuminaText token="overline" color={colors.onSurface.muted}>
+              Note for your driver (optional)
+            </LuminaText>
+            <InsetInput
+              value={note}
+              onChangeText={setNote}
+              placeholder="Where to find you"
+              accessibilityLabel="Note for your driver"
+              editable={!booking}
+              maxLength={NOTE_MAX}
+              style={{ marginTop: spacing.md }}
+            />
+          </GlassCard>
+        </View>
 
         {/* Payment — its own group (the tier cards above stay separate cards:
             selection is carried by elevation, so they must not merge).
