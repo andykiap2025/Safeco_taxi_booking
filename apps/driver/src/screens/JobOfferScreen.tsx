@@ -150,7 +150,10 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
           shadow="soft"
           style={{ marginTop: spacing.sm }}
         >
-          {dispatcher.name} at the Office sent you {job.customerId} — 3 min away.
+          {/* No "3 min away": distance to the pickup needs the driver's
+              position, which is not tracked. The audit sweep caught this one
+              surviving the de-faking pass. */}
+          {dispatcher.name} at the Office sent you this pickup.
         </LuminaText>
 
         {/* The job card */}
