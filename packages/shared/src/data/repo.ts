@@ -53,7 +53,10 @@ export function toDriver(r: Row): DriverProfile {
     rating: r.rating ?? 0,
     totalRides: r.total_rides ?? 0,
     online: r.online ?? false,
-    vehicleId: r.vehicle_id ?? undefined,
+    // NOT from the profiles row — there is no vehicle_id column there. The
+    // relationship lives on vehicles.driver_id and is attached during
+    // hydration; see linkDriverVehicles in data/live.ts.
+    vehicleId: undefined,
   };
 }
 
@@ -70,6 +73,7 @@ export function toVehicle(r: Row): Vehicle {
     model: r.model,
     colour: r.colour,
     plate: r.plate,
+    driverId: r.driver_id ?? undefined,
   };
 }
 

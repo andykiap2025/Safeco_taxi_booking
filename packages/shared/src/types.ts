@@ -77,6 +77,9 @@ export interface Vehicle {
   model: string;
   colour: string;
   plate: string;
+  /** The driver this car belongs to. The DB holds the relationship on this
+   *  side (vehicles.driver_id); DriverProfile.vehicleId is derived from it. */
+  driverId?: string;
 }
 
 export interface DriverProfile {

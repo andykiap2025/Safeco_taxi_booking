@@ -128,7 +128,12 @@ export async function hydrate(): Promise<void> {
       fetchProfiles(),
       fetchVehicles(),
     ]);
-    const drivers = profiles.filter((p) => p.role === 'driver').map(toDriver);
+    // The DB holds driver<->vehicle on vehicles.driver_id, so the link is
+    // attached here rather than read off the profile row.
+    const drivers = profiles
+      .filter((p) => p.role === 'driver')
+      .map(toDriver)
+      .map((d) => ({ ...d, vehicleId: vehicles.find((v) => v.driverId === d.id)?.id }));
     const dispatcherRow = profiles.find((p) => p.role === 'dispatcher');
     commit({
       jobs,
