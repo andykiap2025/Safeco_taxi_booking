@@ -11,7 +11,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { QUEUE_WAIT_FLAG_SECONDS, formatMoney, tierById } from '@safeco/shared';
 import type { JobRequest } from '@safeco/shared';
 import { borders, colors, spacing, touchTarget } from '@safeco/shared/lumina';
-import { MonoText, formatCountdown, useMockState } from '@safeco/shared/components';
+import { MonoText, formatCountdown, useAppState } from '@safeco/shared/components';
 import {
   GlassGroup,
   GlassListItem,
@@ -128,11 +128,11 @@ function QueueRow({ job, waitSeconds, selected, onPress, last }: QueueRowProps) 
 
 export function QueuePane({ selectedJobId, onSelectJob }: QueuePaneProps) {
   useQueueTick();
-  const jobs = useMockState((s) => s.jobs);
-  const waits = useMockState((s) => s.waits);
-  const drivers = useMockState((s) => s.drivers);
-  const dispatcher = useMockState((s) => s.dispatcher);
-  const stats = useMockState((s) => s.stats);
+  const jobs = useAppState((s) => s.jobs);
+  const waits = useAppState((s) => s.waits);
+  const drivers = useAppState((s) => s.drivers);
+  const dispatcher = useAppState((s) => s.dispatcher);
+  const stats = useAppState((s) => s.stats);
 
   const queued = queuedJobs(jobs);
   const running = runningJobs(jobs);

@@ -6,10 +6,17 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { currencySymbol, formatMoney, mockStore } from '@safeco/shared';
+import { completeTrip, currencySymbol, formatMoney } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
-import { useMockState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer, withOpacity } from '@safeco/shared/ui';
+import { useAppState } from '@safeco/shared/components';
+import {
+  GlassCard,
+  InlineError,
+  LuminaText,
+  NeuButton,
+  ScreenContainer,
+  withOpacity,
+} from '@safeco/shared/ui';
 import { GhostButton, StarIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
 
@@ -34,17 +41,41 @@ export function ArrivalScreen({ navigation, route }: ScreenProps<'Arrival'>) {
   const insets = useSafeAreaInsets();
   const [rating, setRating] = useState(5);
   const [tip, setTip] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
-  const driver = useMockState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
 
   if (!job) return <ScreenContainer />;
 
-  const firstName = (driver?.name ?? 'Marisol A.').split(' ')[0];
+  // No fallback name: showing a driver who is not on this trip is worse than
+  // showing nothing, and the empty case only appears while the row loads.
+  const firstName = (driver?.name ?? '').split(' ')[0];
 
-  const finish = (withTip: number | undefined) => {
-    mockStore.completeTrip(jobId, withTip && withTip > 0 ? withTip : undefined);
-    navigation.replace('Receipt', { jobId });
+  const finish = async (withTip: number | undefined) => {
+    if (!job) return;
+    setError(null);
+    setSaving(true);
+    try {
+      // The tip is added to the locked quote here rather than server-side,
+      // which is the same client-trust gap as the add-stop amendment — see
+      // the FARE INTEGRITY note in supabase/schema.sql.
+      const tip = withTip && withTip > 0 ? withTip : undefined;
+      const fare = tip
+        ? {
+            ...job.quotedFare,
+            tip,
+            total: Math.round((job.quotedFare.total + tip) * 100) / 100,
+          }
+        : job.quotedFare;
+      await completeTrip(jobId, fare);
+      navigation.replace('Receipt', { jobId });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -128,8 +159,22 @@ export function ArrivalScreen({ navigation, route }: ScreenProps<'Arrival'>) {
         </GlassCard>
       </View>
 
+      {error ? (
+        <InlineError
+          title="Could not finish the trip"
+          message={error}
+          style={{ marginTop: spacing.md }}
+        />
+      ) : null}
+
       <View style={{ marginTop: 'auto' }}>
-        <NeuButton title="Submit rating" onPress={() => finish(tip)} />
+        <NeuButton
+          title="Submit rating"
+          onPress={() => finish(tip)}
+          loading={saving}
+          disabled={saving}
+          accessibilityLabel="Submit rating"
+        />
         {/* On the gradient — explicit muted white keeps the quiet voice. */}
         <GhostButton
           title="Skip"

@@ -6,10 +6,10 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { mockStore } from '@safeco/shared';
+import { startTrip } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
-import { useMockState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { useAppState } from '@safeco/shared/components';
+import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import { PlateChip, SafetyOverlay, SafetyShield } from '../ui';
 import type { ScreenProps } from '../navigation';
 
@@ -24,10 +24,12 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
-  const driver = useMockState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
-  const vehicle = useMockState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
+  const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
 
   if (!job) return <ScreenContainer />;
 
@@ -109,12 +111,31 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
         <SafetyShield onPress={() => setSafetyOpen(true)} />
       </View>
 
+      {error ? (
+        <InlineError
+          title="Could not start the trip"
+          message={error}
+          style={{ marginTop: spacing.md }}
+        />
+      ) : null}
+
       <View style={{ marginTop: 'auto' }}>
         <NeuButton
           title="I'm in the car"
-          onPress={() => {
-            mockStore.startTrip(jobId);
-            navigation.replace('Trip', { jobId });
+          loading={starting}
+          disabled={starting}
+          accessibilityLabel="I'm in the car"
+          onPress={async () => {
+            setError(null);
+            setStarting(true);
+            try {
+              await startTrip(jobId);
+              navigation.replace('Trip', { jobId });
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setStarting(false);
+            }
           }}
         />
       </View>

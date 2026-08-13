@@ -32,7 +32,7 @@ import {
   touchTarget,
   typography,
 } from '@safeco/shared/lumina';
-import { MapPlate, MonoText, formatCountdown, useMockState } from '@safeco/shared/components';
+import { MapPlate, MonoText, formatCountdown, useAppState } from '@safeco/shared/components';
 import {
   GlassBadge,
   GlassCard,
@@ -191,7 +191,7 @@ function CandidateRow({ candidate, selected, disabled, flagged, last, onPress }:
 }
 
 export function AssignPane({ jobId, onClose }: AssignPaneProps) {
-  const state = useMockState((s) => s);
+  const state = useAppState((s) => s);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showOtherTiers, setShowOtherTiers] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);

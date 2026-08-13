@@ -9,19 +9,21 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   computeQuote,
+  createJob,
   currencySymbol,
   formatMoney,
-  mockStore,
   tierById,
   TIERS,
   type TierId,
 } from '@safeco/shared';
+import { useAuth } from '@safeco/shared/auth';
 import { colors, spacing } from '@safeco/shared/lumina';
 import { MapPlate } from '@safeco/shared/components';
 import {
   GlassCard,
   GlassGroup,
   GlassListItem,
+  InlineError,
   LuminaText,
   NeuButton,
   ScreenContainer,
@@ -33,20 +35,35 @@ const SORTED_TIERS = [...TIERS].sort((a, b) => a.sortOrder - b.sortOrder);
 
 export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
   const insets = useSafeAreaInsets();
+  const { profile } = useAuth();
   const [tierId, setTierId] = useState<TierId>('go');
+  const [booking, setBooking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const quote = computeQuote(ROUTE, tierId);
   const tier = tierById(tierId);
 
-  const book = () => {
-    const job = mockStore.createJob({
-      customer: 'You',
-      tier: tierId,
-      pickup: { address: '14 Kingsway' },
-      dropoff: { address: '8 Rowan St' },
-      quotedFare: quote,
-      noteToDriver: 'Waiting by the newsstand on the corner.',
-    });
-    navigation.navigate('OfficeAssigning', { jobId: job.id });
+  const book = async () => {
+    if (!profile) return;
+    setError(null);
+    setBooking(true);
+    try {
+      // The quote sent here is the one the customer is looking at — the
+      // fare-lock promise binds to what was on screen at the moment they
+      // tapped, not to a recomputation afterwards.
+      const job = await createJob({
+        customerId: profile.id,
+        tier: tierId,
+        pickup: { address: '14 Kingsway' },
+        dropoff: { address: '8 Rowan St' },
+        quotedFare: quote,
+        noteToDriver: 'Waiting by the newsstand on the corner.',
+      });
+      navigation.navigate('OfficeAssigning', { jobId: job.id });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBooking(false);
+    }
   };
 
   return (
@@ -109,8 +126,22 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
           />
         </GlassGroup>
 
+        {error ? (
+          <InlineError
+            title="Could not book your ride"
+            message={error}
+            style={{ marginTop: spacing.md }}
+          />
+        ) : null}
+
         <View style={{ marginTop: 'auto', paddingTop: spacing.md }}>
-          <NeuButton title={`Book ${tier.name} · ${formatMoney(quote.total)}`} onPress={book} />
+          <NeuButton
+            title={`Book ${tier.name} · ${formatMoney(quote.total)}`}
+            onPress={book}
+            loading={booking}
+            disabled={booking || !profile}
+            accessibilityLabel={`Book ${tier.name} for ${formatMoney(quote.total)}`}
+          />
         </View>
       </View>
     </ScreenContainer>

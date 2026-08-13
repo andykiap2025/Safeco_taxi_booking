@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMoney, mockStore } from '@safeco/shared';
 import { borders, colors, radius, shadows, spacing, typography } from '@safeco/shared/lumina';
-import { BrandWordmark, MapPlate, MonoText, useMockState } from '@safeco/shared/components';
+import { BrandWordmark, MapPlate, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 import {
@@ -30,9 +30,9 @@ const MAP_STRIP_HEIGHT = 160;
 export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
   const insets = useSafeAreaInsets();
   const online = useOnline();
-  const driver = useMockState((s) => s.drivers.find((d) => d.id === DRIVER_ID));
-  const ward = useMockState((s) => s.dispatcher.ward);
-  const jobStatus = useMockState((s) => s.jobs.find((j) => j.id === OFFER_JOB_ID)?.status);
+  const driver = useAppState((s) => s.drivers.find((d) => d.id === DRIVER_ID));
+  const ward = useAppState((s) => s.dispatcher.ward);
+  const jobStatus = useAppState((s) => s.jobs.find((j) => j.id === OFFER_JOB_ID)?.status);
 
   // Simulation: while online and the job is still at the desk, the Office
   // offers it to Marisol after ~4 seconds.

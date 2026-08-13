@@ -5,7 +5,7 @@
 
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, radius, shadows, spacing, typography } from '@safeco/shared/lumina';
-import { BrandWordmark, useMockState } from '@safeco/shared/components';
+import { BrandWordmark, useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText } from '@safeco/shared/ui';
 import { queuedJobs } from '../lib/candidates';
 
@@ -33,9 +33,9 @@ function Stat({ value, label, valueColor }: { value: string; label: string; valu
 }
 
 export function DeskHeader({ style }: DeskHeaderProps) {
-  const dispatcher = useMockState((s) => s.dispatcher);
-  const stats = useMockState((s) => s.stats);
-  const jobs = useMockState((s) => s.jobs);
+  const dispatcher = useAppState((s) => s.dispatcher);
+  const stats = useAppState((s) => s.stats);
+  const jobs = useAppState((s) => s.jobs);
   const waitingCount = queuedJobs(jobs).length;
 
   return (

@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMoney } from '@safeco/shared';
 import { borders, colors, shadows, spacing } from '@safeco/shared/lumina';
-import { BrandWordmark, MonoText, useMockState } from '@safeco/shared/components';
+import { BrandWordmark, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassBadge, GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
@@ -49,7 +49,7 @@ function LedgerRow({ label, value, italic }: { label: string; value: string; ita
 export function ReceiptScreen({ navigation, route }: ScreenProps<'Receipt'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
 
   if (!job) return <ScreenContainer />;
 

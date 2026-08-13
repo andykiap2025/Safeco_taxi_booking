@@ -5,7 +5,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMoney, mockStore } from '@safeco/shared';
 import { colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, useMockState } from '@safeco/shared/components';
+import { MapPlate, useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
@@ -13,7 +13,7 @@ export function OnTripScreen({ navigation, route }: ScreenProps<'OnTrip'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
   const { height: winHeight } = useWindowDimensions();
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
 
   if (!job) return <ScreenContainer />;
 

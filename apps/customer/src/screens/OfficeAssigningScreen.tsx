@@ -1,16 +1,26 @@
 // The Office is assigning — waiting/reviewing screen, details dominant; the
 // map is small with a pulsing teal ring. UI copy never says "dispatch": the
-// customer sees "the Office" and Ravi K. by name (CLAUDE.md naming rules).
-// Simulation: after ~3s the Office offers the job to Marisol; ~2.5s later she
-// confirms and we move to the map-dominant Approach screen.
+// customer sees "the Office" and the dispatcher by name (CLAUDE.md naming).
+//
+// This screen WAITS; it does not assign. A real dispatcher does that from the
+// Office console, and the realtime feed moves the customer on when the job
+// reaches 'arriving'. It used to fake both halves on timers, which advanced
+// the customer whether or not a driver ever existed.
 
-import { useEffect, useRef } from 'react';
-import { Animated, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatMoney, mockStore } from '@safeco/shared';
+import { cancelJob, formatMoney } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
-import { MapPlate, useMockState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer, withOpacity } from '@safeco/shared/ui';
+import { MapPlate, useAppState, useJob, useSync } from '@safeco/shared/components';
+import {
+  GlassCard,
+  InlineError,
+  LuminaText,
+  NeuButton,
+  ScreenContainer,
+  withOpacity,
+} from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
 // Segmented progress bars: 6dp tall, teal for done segments, faint white
@@ -75,8 +85,11 @@ function StepRow({
 export function OfficeAssigningScreen({ navigation, route }: ScreenProps<'OfficeAssigning'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
-  const dispatcherName = useMockState((s) => s.dispatcher.name);
+  const { job } = useJob(jobId);
+  const sync = useSync();
+  const dispatcherName = useAppState((s) => s.dispatcher.name);
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -87,19 +100,50 @@ export function OfficeAssigningScreen({ navigation, route }: ScreenProps<'Office
     return () => loop.stop();
   }, [pulse]);
 
+  // The Office assigns the car — this screen only waits for it. Previously it
+  // faked both halves on timers, which meant the customer advanced whether or
+  // not a driver ever existed. Now the realtime feed moves us on: the moment a
+  // dispatcher's assignment is confirmed, the job reaches 'arriving'.
   useEffect(() => {
-    const offer = setTimeout(() => mockStore.offerJob(jobId, 'marisol', 'kb-41-508'), 3000);
-    const confirm = setTimeout(() => {
-      mockStore.driverConfirm(jobId);
+    if (job?.status === 'arriving' || job?.status === 'assigned') {
       navigation.replace('Approach', { jobId });
-    }, 5500);
-    return () => {
-      clearTimeout(offer);
-      clearTimeout(confirm);
-    };
-  }, [jobId, navigation]);
+    }
+    if (job?.status === 'cancelled') {
+      navigation.popToTop();
+    }
+  }, [job?.status, jobId, navigation]);
 
-  if (!job) return <ScreenContainer />;
+  const cancel = async () => {
+    setError(null);
+    setCancelling(true);
+    try {
+      await cancelJob(jobId);
+      navigation.popToTop();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  if (!job) {
+    return (
+      <ScreenContainer style={{ padding: spacing.lg, justifyContent: 'center' }}>
+        {sync.status === 'loading' ? (
+          <ActivityIndicator color={colors.primary.light} />
+        ) : (
+          <InlineError
+            title="Ride not found"
+            message={
+              sync.error ??
+              'We could not load this booking. It may have been cancelled from another device.'
+            }
+            action={<NeuButton title="Back" onPress={() => navigation.popToTop()} />}
+          />
+        )}
+      </ScreenContainer>
+    );
+  }
 
   const fare = formatMoney(job.quotedFare.total);
   const offered = job.status === 'offered' || job.status === 'arriving';
@@ -197,14 +241,22 @@ export function OfficeAssigningScreen({ navigation, route }: ScreenProps<'Office
           ))}
         </View>
 
+        {error ? (
+          <InlineError
+            title="Could not cancel"
+            message={error}
+            style={{ marginTop: spacing.md }}
+          />
+        ) : null}
+
         <View style={{ marginTop: 'auto', paddingTop: spacing.md }}>
           <NeuButton
             variant="secondary"
             title="Cancel request"
-            onPress={() => {
-              mockStore.cancelJob(jobId);
-              navigation.popToTop();
-            }}
+            onPress={cancel}
+            loading={cancelling}
+            disabled={cancelling}
+            accessibilityLabel="Cancel request"
           />
         </View>
       </View>

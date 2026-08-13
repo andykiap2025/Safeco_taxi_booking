@@ -12,7 +12,7 @@ import {
   tierById,
 } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
-import { CountdownBadge, MapPlate, useMockState } from '@safeco/shared/components';
+import { CountdownBadge, MapPlate, useAppState } from '@safeco/shared/components';
 import {
   GlassCard,
   LuminaText,
@@ -39,8 +39,8 @@ function formatJobNumber(n: number): string {
 export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
-  const dispatcher = useMockState((s) => s.dispatcher);
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const dispatcher = useAppState((s) => s.dispatcher);
   const [secondsLeft, setSecondsLeft] = useState(DRIVER_CONFIRM_WINDOW_SECONDS);
   const handledRef = useRef(false);
 

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, MonoText, useMockState } from '@safeco/shared/components';
+import { MapPlate, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import { PlateChip, SafetyOverlay, SafetyShield } from '../ui';
 import type { ScreenProps } from '../navigation';
@@ -28,10 +28,10 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
   const [expanded, setExpanded] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
 
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
-  const driver = useMockState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
-  const vehicle = useMockState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
-  const dispatcherName = useMockState((s) => s.dispatcher.name);
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
+  const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
+  const dispatcherName = useAppState((s) => s.dispatcher.name);
 
   if (!job) return <ScreenContainer />;
 

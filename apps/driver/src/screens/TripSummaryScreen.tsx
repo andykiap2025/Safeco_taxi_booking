@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMoney } from '@safeco/shared';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
-import { useMockState } from '@safeco/shared/components';
+import { useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 import { DAY_BASE } from '../state';
@@ -13,7 +13,7 @@ import { DAY_BASE } from '../state';
 export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummary'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
 
   if (!job) return <ScreenContainer />;
 

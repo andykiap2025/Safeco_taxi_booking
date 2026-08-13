@@ -10,16 +10,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ADD_STOP_DISALLOWED_TIERS,
   amendedTotal,
+  confirmAmendment,
   formatMoney,
-  mockStore,
   type TierId,
 } from '@safeco/shared';
 import { colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, useMockState } from '@safeco/shared/components';
+import { MapPlate, useAppState } from '@safeco/shared/components';
 import {
   GlassCard,
   GlassListItem,
   GlassModal,
+  InlineError,
   LuminaText,
   NeuButton,
   ScreenContainer,
@@ -35,8 +36,10 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
   const insets = useSafeAreaInsets();
   const [stopOpen, setStopOpen] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [amending, setAmending] = useState(false);
+  const [amendError, setAmendError] = useState<string | null>(null);
 
-  const job = useMockState((s) => s.jobs.find((j) => j.id === jobId));
+  const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
   if (!job) return <ScreenContainer />;
 
   const addStopAllowed = !(ADD_STOP_DISALLOWED_TIERS as readonly TierId[]).includes(job.tier);
@@ -126,12 +129,33 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
           </LuminaText>{' '}
           · fixed
         </LuminaText>
+        {amendError ? (
+          <InlineError
+            title="Could not change the fare"
+            message={amendError}
+            style={{ marginTop: spacing.md }}
+          />
+        ) : null}
+
         <View style={{ marginTop: spacing.xl }}>
           <NeuButton
             title="Confirm new fare"
-            onPress={() => {
-              mockStore.confirmAmendment(job.id, { address: 'Rowan St Market' }, newTotal);
-              setStopOpen(false);
+            loading={amending}
+            disabled={amending}
+            accessibilityLabel="Confirm new fare"
+            onPress={async () => {
+              setAmendError(null);
+              setAmending(true);
+              try {
+                // The ONLY path that changes a locked fare, and it only runs
+                // after the customer has seen this exact figure (CLAUDE.md).
+                await confirmAmendment(job, { address: 'Rowan St Market' }, newTotal);
+                setStopOpen(false);
+              } catch (e) {
+                setAmendError((e as Error).message);
+              } finally {
+                setAmending(false);
+              }
             }}
           />
         </View>
