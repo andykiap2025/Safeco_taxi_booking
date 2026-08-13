@@ -8,6 +8,7 @@ export { GlassCard, type GlassCardProps, type GlassCardVariant } from './GlassCa
 export { ConfigErrorScreen, type ConfigErrorScreenProps } from './ConfigErrorScreen';
 export { InlineError, type InlineErrorProps } from './InlineError';
 export { AccessDeniedScreen, type AccessDeniedScreenProps } from './AccessDeniedScreen';
+export { RecordMissingScreen, type RecordMissingScreenProps } from './RecordMissingScreen';
 export { GlassGroup, type GlassGroupProps } from './GlassGroup';
 export { GroupContext, useGroup, type GroupGeometry } from './GroupContext';
 export { NeuButton, type NeuButtonProps, type NeuButtonVariant } from './NeuButton';

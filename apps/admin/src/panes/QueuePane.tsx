@@ -50,6 +50,14 @@ function QueueRow({ job, waitSeconds, selected, onPress, last }: QueueRowProps) 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      // Read as one sentence. Without this a screen reader announces the row's
+      // fragments in layout order — number, name, tier, addresses, fare, timer
+      // — which is not how a dispatcher needs to hear a queue.
+      accessibilityLabel={`Request ${job.number}, ${job.customerId}, ${tier.name}, ${
+        job.pickup.address
+      } to ${job.dropoff.address}, waiting ${formatCountdown(waitSeconds)}${
+        overdue ? ', overdue' : ''
+      }`}
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',

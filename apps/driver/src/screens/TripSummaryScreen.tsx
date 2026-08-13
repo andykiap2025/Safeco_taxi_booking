@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { earningsToday, formatDistance, formatDuration, formatMoney } from '@safeco/shared';
 import { useAuth } from '@safeco/shared/auth';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
-import { useAppState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { useAppState, useSync } from '@safeco/shared/components';
+import { GlassCard, LuminaText, NeuButton, ScreenContainer, RecordMissingScreen } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
 export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummary'>) {
@@ -15,9 +15,19 @@ export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummar
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const day = useAppState(() => earningsToday(profile?.id));
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="trip"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   // Real totals from this driver's completed jobs — the trip just finished is
   // already among them. Was a fixed baseline plus one.

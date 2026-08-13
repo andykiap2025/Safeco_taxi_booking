@@ -8,8 +8,8 @@ import { Linking, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatClock, startTrip } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
-import { useAppState } from '@safeco/shared/components';
-import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { useAppState, useSync } from '@safeco/shared/components';
+import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer, RecordMissingScreen } from '@safeco/shared/ui';
 import { PlateChip, SafetyOverlay, SafetyShield } from '../ui';
 import type { ScreenProps } from '../navigation';
 
@@ -28,10 +28,20 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
   const [error, setError] = useState<string | null>(null);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
   const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="ride"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   // NOTHING on this screen falls back to invented values. It is the
   // identification moment: the rider matches this name, car and plate against

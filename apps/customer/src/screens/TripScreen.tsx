@@ -19,7 +19,7 @@ import {
   type TierId,
 } from '@safeco/shared';
 import { colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, useAppState } from '@safeco/shared/components';
+import { MapPlate, useAppState, useSync } from '@safeco/shared/components';
 import {
   GlassCard,
   GlassListItem,
@@ -28,6 +28,7 @@ import {
   LuminaText,
   NeuButton,
   ScreenContainer,
+  RecordMissingScreen,
 } from '@safeco/shared/ui';
 import { PlacePicker, SafetyOverlay, ShieldIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
@@ -46,13 +47,23 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
   const places = useAppState((s) => s.places);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
 
   // The driver completed the trip — move to rating and the receipt.
   useEffect(() => {
     if (job?.status === 'completed') navigation.replace('Arrival', { jobId });
   }, [job?.status, jobId, navigation]);
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="trip"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   const addStopAllowed = !(ADD_STOP_DISALLOWED_TIERS as readonly TierId[]).includes(job.tier);
   const showAddStop = addStopAllowed && !(job.stops && job.stops.length > 0);

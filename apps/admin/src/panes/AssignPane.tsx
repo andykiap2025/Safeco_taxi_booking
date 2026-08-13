@@ -122,6 +122,13 @@ function CandidateRow({ candidate, selected, disabled, flagged, last, onPress }:
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
+      // The tier mismatch must be spoken, not just shown in rose — it is the
+      // whole reason this row needs an acknowledgement before it can be sent.
+      accessibilityLabel={`${driver.name}, rated ${driver.rating.toFixed(2)}, ${vehicle.colour} ${
+        vehicle.make
+      } ${vehicle.model}, plate ${vehicle.plate}${
+        flagged ? `, different tier: ${tierById(vehicle.tier).name}` : ''
+      }`}
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
@@ -388,6 +395,8 @@ export function AssignPane({ jobId, onClose }: AssignPaneProps) {
         <Pressable
           onPress={() => setShowOtherTiers((v) => !v)}
           accessibilityRole="button"
+          accessibilityLabel={showOtherTiers ? 'Hide other tiers' : 'Show other tiers'}
+          accessibilityState={{ expanded: showOtherTiers }}
           style={{ minHeight: touchTarget, justifyContent: 'center', paddingHorizontal: spacing.xs }}
         >
           <LuminaText token="button" color={colors.primary.light} shadow="soft">
@@ -455,6 +464,7 @@ export function AssignPane({ jobId, onClose }: AssignPaneProps) {
               disabled={sent}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: acknowledged }}
+              accessibilityLabel="Acknowledge tier mismatch"
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',

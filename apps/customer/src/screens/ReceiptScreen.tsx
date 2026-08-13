@@ -13,8 +13,8 @@ import {
   formatMoney,
 } from '@safeco/shared';
 import { borders, colors, shadows, spacing } from '@safeco/shared/lumina';
-import { BrandWordmark, MonoText, useAppState } from '@safeco/shared/components';
-import { GlassBadge, GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { BrandWordmark, MonoText, useAppState, useSync } from '@safeco/shared/components';
+import { GlassBadge, GlassCard, LuminaText, NeuButton, ScreenContainer, RecordMissingScreen } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
 const FIGURE_SIZE = 15;
@@ -56,8 +56,18 @@ export function ReceiptScreen({ navigation, route }: ScreenProps<'Receipt'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="receipt"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   const f = job.quotedFare;
   const amendments = job.amendments ?? [];

@@ -15,13 +15,14 @@ import {
   tierById,
 } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
-import { CountdownBadge, MapPlate, useAppState } from '@safeco/shared/components';
+import { CountdownBadge, MapPlate, useAppState, useSync } from '@safeco/shared/components';
 import {
   GlassCard,
   LuminaText,
   NeuButton,
   ScreenContainer,
   withOpacity,
+  RecordMissingScreen,
 } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 import { setOnline } from '../state';
@@ -43,6 +44,7 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const dispatcher = useAppState((s) => s.dispatcher);
   const [secondsLeft, setSecondsLeft] = useState(DRIVER_CONFIRM_WINDOW_SECONDS);
   const [busy, setBusy] = useState(false);
@@ -65,7 +67,16 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
     navigation.popToTop();
   }, [secondsLeft, jobId, navigation]);
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="job"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   // Both paths navigate away regardless of the write's outcome: the decision
   // has been made and stranding the driver on a dead countdown is worse than a

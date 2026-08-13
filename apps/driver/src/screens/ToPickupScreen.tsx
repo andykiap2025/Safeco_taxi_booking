@@ -6,13 +6,14 @@ import { useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { driverArrived } from '@safeco/shared';
 import { colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, useAppState } from '@safeco/shared/components';
+import { MapPlate, useAppState, useSync } from '@safeco/shared/components';
 import {
   GlassCard,
   InlineError,
   LuminaText,
   NeuButton,
   ScreenContainer,
+  RecordMissingScreen,
 } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
@@ -21,10 +22,20 @@ export function ToPickupScreen({ navigation, route }: ScreenProps<'ToPickup'>) {
   const insets = useSafeAreaInsets();
   const { height: winHeight } = useWindowDimensions();
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="job"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   const mapHeight = Math.max(430, winHeight - 215 - insets.bottom);
 

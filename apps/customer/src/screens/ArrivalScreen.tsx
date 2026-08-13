@@ -15,7 +15,7 @@ import {
   formatMoney,
 } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
-import { useAppState } from '@safeco/shared/components';
+import { useAppState, useSync } from '@safeco/shared/components';
 import {
   GlassCard,
   InlineError,
@@ -23,6 +23,7 @@ import {
   NeuButton,
   ScreenContainer,
   withOpacity,
+  RecordMissingScreen,
 } from '@safeco/shared/ui';
 import { GhostButton, StarIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
@@ -52,9 +53,19 @@ export function ArrivalScreen({ navigation, route }: ScreenProps<'Arrival'>) {
   const [error, setError] = useState<string | null>(null);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="ride"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   // No fallback name: showing a driver who is not on this trip is worse than
   // showing nothing, and the empty case only appears while the row loads.

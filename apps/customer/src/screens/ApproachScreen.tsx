@@ -8,8 +8,8 @@ import { Linking, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchJobEvents, formatClock, type JobEvent } from '@safeco/shared';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
-import { MapPlate, MonoText, useAppState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { MapPlate, MonoText, useAppState, useSync } from '@safeco/shared/components';
+import { GlassCard, LuminaText, NeuButton, ScreenContainer, RecordMissingScreen } from '@safeco/shared/ui';
 import { PlateChip, SafetyOverlay, SafetyShield } from '../ui';
 import type { ScreenProps } from '../navigation';
 
@@ -38,6 +38,7 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
   const [safetyOpen, setSafetyOpen] = useState(false);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const sync = useSync();
   const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
   const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
   const dispatcherName = useAppState((s) => s.dispatcher.name);
@@ -69,7 +70,16 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
     if (job?.status === 'cancelled') navigation.popToTop();
   }, [job?.status, jobId, navigation]);
 
-  if (!job) return <ScreenContainer />;
+  if (!job) {
+    return (
+      <RecordMissingScreen
+        loading={sync.status === 'loading'}
+        noun="ride"
+        error={sync.error}
+        onBack={() => navigation.popToTop()}
+      />
+    );
+  }
 
   // No invented fallbacks: a wrong driver name or car colour on this screen is
   // actively dangerous, since it is what the rider matches against the kerb.
