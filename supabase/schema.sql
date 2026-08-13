@@ -13,9 +13,18 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   create type job_status as enum (
     'requested', 'at_desk', 'waiting', 'offered', 'assigned',
-    'arriving', 'on_trip', 'completed', 'cancelled', 'returned'
+    'arriving', 'at_pickup', 'on_trip', 'completed', 'cancelled', 'returned'
   );
 exception when duplicate_object then null; end $$;
+
+-- Added after the enum first shipped, so existing projects need it too.
+-- 'at_pickup' separates "the driver has arrived" from "the rider has boarded".
+-- Without it the driver's arrival would jump the job straight to on_trip and
+-- the rider would never see the car-identification screen — the one moment
+-- they check the plate before getting in.
+do $$ begin
+  alter type job_status add value if not exists 'at_pickup' after 'arriving';
+exception when others then null; end $$;
 
 do $$ begin
   create type actor_role as enum ('customer', 'driver', 'dispatcher');

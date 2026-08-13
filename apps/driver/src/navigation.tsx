@@ -5,6 +5,8 @@ import {
   createNativeStackNavigator,
   type NativeStackScreenProps,
 } from '@react-navigation/native-stack';
+import { colors } from '@safeco/shared/lumina';
+import { SignInScreen } from './screens/SignInScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -20,3 +22,18 @@ export type ScreenProps<T extends keyof RootStackParamList> = NativeStackScreenP
 >;
 
 export const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// Signed-out stack. Separate from the app stack so a driver without a session
+// cannot reach a job route by navigating.
+export type AuthStackParamList = { SignIn: undefined };
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+
+export function AuthNavigator() {
+  return (
+    <AuthStack.Navigator
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+    >
+      <AuthStack.Screen name="SignIn" component={SignInScreen} />
+    </AuthStack.Navigator>
+  );
+}

@@ -13,6 +13,7 @@ export type JobStatus =
   | 'offered' // sent to a driver; confirm window running
   | 'assigned' // driver confirmed
   | 'arriving' // driver en route to pickup
+  | 'at_pickup' // driver has arrived and is waiting for the rider to board
   | 'on_trip'
   | 'completed'
   | 'cancelled'

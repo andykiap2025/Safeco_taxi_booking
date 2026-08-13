@@ -1,16 +1,18 @@
-// Driver-app local state: the online toggle (a tiny external store so Home
-// and JobOffer both see it) plus the demo day's fixed identifiers and
-// earnings baseline. Job/trip state itself lives in the shared mockStore.
+// Driver-app local state.
+//
+// Identity is NOT here any more. It used to hardcode DRIVER_ID = 'marisol',
+// VEHICLE_ID and the one job the simulation would offer; all three now come
+// from the signed-in session and the live store. What remains is genuinely
+// local: the online toggle's optimistic value, and the day's earnings
+// baseline, which still has no backing table.
 
 import { useSyncExternalStore } from 'react';
 
-// ─── Demo cast (seeded in @safeco/shared mock data) ─────────────────────────
+// ─── Day ledger ─────────────────────────────────────────────────────────────
+// PLACEHOLDER. Earnings history needs a query over completed jobs (or a
+// payouts table) before it means anything — these figures are from the design
+// export and are the same for every driver. Flagged in CLAUDE.md.
 
-export const OFFER_JOB_ID = 'job-40118';
-export const DRIVER_ID = 'marisol';
-export const VEHICLE_ID = 'kb-41-508';
-
-// Today's ledger before the simulated job comes in.
 export const DAY_BASE = { earnedToday: 184.2, tripsToday: 11 } as const;
 
 export interface LedgerRow {
@@ -25,6 +27,8 @@ export const DAY_LEDGER: readonly LedgerRow[] = [
 ] as const;
 
 // ─── Online toggle ──────────────────────────────────────────────────────────
+// Held locally as well as on the profile row so the switch responds instantly;
+// the write is fired alongside and the store's realtime update reconciles it.
 
 type Listener = () => void;
 
@@ -43,5 +47,5 @@ function subscribe(listener: Listener): () => void {
 }
 
 export function useOnline(): boolean {
-  return useSyncExternalStore(subscribe, () => online);
+  return useSyncExternalStore(subscribe, () => online, () => online);
 }

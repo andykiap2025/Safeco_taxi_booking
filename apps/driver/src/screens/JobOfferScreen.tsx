@@ -7,8 +7,9 @@ import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   DRIVER_CONFIRM_WINDOW_SECONDS,
+  driverConfirm,
+  driverReturn,
   formatMoney,
-  mockStore,
   tierById,
 } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
@@ -42,6 +43,8 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
   const dispatcher = useAppState((s) => s.dispatcher);
   const [secondsLeft, setSecondsLeft] = useState(DRIVER_CONFIRM_WINDOW_SECONDS);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const handledRef = useRef(false);
 
   useEffect(() => {
@@ -53,25 +56,47 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
   useEffect(() => {
     if (secondsLeft > 0 || handledRef.current) return;
     handledRef.current = true;
-    mockStore.driverReturn(jobId);
+    void driverReturn(jobId).catch(() => {
+      // The window has already closed for the driver either way; the Office
+      // reclaims the job from its own timeout.
+    });
     navigation.popToTop();
   }, [secondsLeft, jobId, navigation]);
 
   if (!job) return <ScreenContainer />;
 
-  const decline = () => {
+  // Both paths navigate away regardless of the write's outcome: the decision
+  // has been made and stranding the driver on a dead countdown is worse than a
+  // stale row. A failure is surfaced, and the Office still holds the job.
+  const decline = async () => {
     if (handledRef.current) return;
     handledRef.current = true;
-    mockStore.driverReturn(jobId);
-    setOnline(false);
-    navigation.popToTop();
+    setBusy(true);
+    try {
+      await driverReturn(jobId);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+      navigation.popToTop();
+    }
   };
 
-  const confirm = () => {
+  const confirm = async () => {
     if (handledRef.current) return;
     handledRef.current = true;
-    mockStore.driverConfirm(jobId);
-    navigation.replace('ToPickup', { jobId });
+    setBusy(true);
+    try {
+      await driverConfirm(jobId);
+      navigation.replace('ToPickup', { jobId });
+    } catch (e) {
+      // Stay put on failure — moving to ToPickup would tell the driver the
+      // Office knows they accepted when it does not.
+      handledRef.current = false;
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const tier = tierById(job.tier);
@@ -225,8 +250,22 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
             paddingTop: spacing.lg,
           }}
         >
-          <NeuButton variant="secondary" title="Can't take it" onPress={decline} style={{ flex: 1 }} />
-          <NeuButton title="Confirm & navigate" onPress={confirm} style={{ flex: 1.4 }} />
+          <NeuButton
+            variant="secondary"
+            title="Can't take it"
+            onPress={decline}
+            disabled={busy}
+            accessibilityLabel="Can't take it"
+            style={{ flex: 1 }}
+          />
+          <NeuButton
+            title="Confirm & navigate"
+            onPress={confirm}
+            loading={busy}
+            disabled={busy}
+            accessibilityLabel="Confirm and navigate"
+            style={{ flex: 1.4 }}
+          />
         </View>
       </ScrollView>
     </ScreenContainer>

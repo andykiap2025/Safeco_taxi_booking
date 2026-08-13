@@ -2,23 +2,16 @@
 // on glass cards, a small map strip (no active movement yet), and the online
 // toggle. While online, the Office sends job 40 118 after a few seconds.
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatMoney, mockStore } from '@safeco/shared';
+import { formatMoney, setDriverOnline } from '@safeco/shared';
+import { useAuth } from '@safeco/shared/auth';
 import { borders, colors, radius, shadows, spacing, typography } from '@safeco/shared/lumina';
 import { BrandWordmark, MapPlate, MonoText, useAppState } from '@safeco/shared/components';
-import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
+import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
-import {
-  DAY_BASE,
-  DAY_LEDGER,
-  DRIVER_ID,
-  OFFER_JOB_ID,
-  setOnline,
-  useOnline,
-  VEHICLE_ID,
-} from '../state';
+import { DAY_BASE, DAY_LEDGER, setOnline, useOnline } from '../state';
 
 const TRIPS_COL = 56;
 const EARNED_COL = 84;
@@ -29,25 +22,44 @@ const MAP_STRIP_HEIGHT = 160;
 
 export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
   const insets = useSafeAreaInsets();
+  const { profile } = useAuth();
   const online = useOnline();
-  const driver = useAppState((s) => s.drivers.find((d) => d.id === DRIVER_ID));
   const ward = useAppState((s) => s.dispatcher.ward);
-  const jobStatus = useAppState((s) => s.jobs.find((j) => j.id === OFFER_JOB_ID)?.status);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simulation: while online and the job is still at the desk, the Office
-  // offers it to Marisol after ~4 seconds.
+  // The signed-in driver, from the live roster rather than a hardcoded id.
+  const driver = useAppState((s) => s.drivers.find((d) => d.id === profile?.id));
+
+  // A job the Office has actually sent to THIS driver and is awaiting confirm
+  // on. RLS already limits jobs to ones assigned to them, but the id check
+  // keeps this honest if that ever loosens.
+  const offered = useAppState((s) =>
+    s.jobs.find((j) => j.status === 'offered' && j.assignedDriverId === profile?.id),
+  );
+
+  // Replaces the four-second fake offer. A real job arrives when a dispatcher
+  // sends it, over realtime.
+  //
+  // NOTE: this only fires while the app is foregrounded on this screen. The
+  // confirm window is two minutes, so a driver with the phone in their pocket
+  // still misses it — push notifications are the missing piece, not this
+  // effect. See CLAUDE.md production gates.
   useEffect(() => {
-    if (!online) return;
-    if (jobStatus !== 'at_desk' && jobStatus !== 'waiting') return;
-    const timer = setTimeout(() => {
-      const job = mockStore.job(OFFER_JOB_ID);
-      if (!job || (job.status !== 'at_desk' && job.status !== 'waiting')) return;
-      if (!navigation.isFocused()) return;
-      mockStore.offerJob(OFFER_JOB_ID, DRIVER_ID, VEHICLE_ID);
-      navigation.navigate('JobOffer', { jobId: OFFER_JOB_ID });
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [online, jobStatus, navigation]);
+    if (!offered || !navigation.isFocused()) return;
+    navigation.navigate('JobOffer', { jobId: offered.id });
+  }, [offered, navigation]);
+
+  const toggleOnline = async (next: boolean) => {
+    if (!profile) return;
+    setError(null);
+    setOnline(next); // optimistic: the switch must feel instant
+    try {
+      await setDriverOnline(profile.id, next);
+    } catch (e) {
+      setOnline(!next); // put it back — the desk never saw the change
+      setError((e as Error).message);
+    }
+  };
 
   return (
     <ScreenContainer>
@@ -78,7 +90,7 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
           shadow="soft"
           style={{ marginTop: spacing.xs }}
         >
-          {driver ? driver.name : 'Marisol A.'} · {ward}
+          {driver?.name ?? profile?.name ?? ''} · {ward}
         </LuminaText>
 
         {/* Today's earnings and the day-part ledger are the same subject, so
@@ -212,11 +224,27 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
                   Online · waiting for jobs
                 </LuminaText>
               </View>
-              <NeuButton variant="secondary" title="Go offline" onPress={() => setOnline(false)} />
+              <NeuButton
+                variant="secondary"
+                title="Go offline"
+                onPress={() => void toggleOnline(false)}
+                accessibilityLabel="Go offline"
+              />
             </>
           ) : (
-            <NeuButton title="Go online" onPress={() => setOnline(true)} />
+            <NeuButton
+              title="Go online"
+              onPress={() => void toggleOnline(true)}
+              accessibilityLabel="Go online"
+            />
           )}
+          {error ? (
+            <InlineError
+              title="Could not change your status"
+              message={error}
+              style={{ marginTop: spacing.md }}
+            />
+          ) : null}
         </View>
       </ScrollView>
     </ScreenContainer>

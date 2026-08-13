@@ -186,6 +186,12 @@ export function driverReturn(jobId: string) {
   );
 }
 
+/** Driver has pulled up. The rider still has to board — see startTrip. */
+export function driverArrived(jobId: string) {
+  return patchJob(jobId, { status: 'at_pickup' }, 'Could not mark your arrival');
+}
+
+/** The rider is in the car. Triggered by the RIDER, not the driver. */
 export function startTrip(jobId: string) {
   return patchJob(jobId, { status: 'on_trip' }, 'Could not start the trip');
 }

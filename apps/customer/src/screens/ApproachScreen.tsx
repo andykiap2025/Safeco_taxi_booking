@@ -3,7 +3,7 @@
 // GlassCard floating at the bottom with margins so its halo breathes.
 // Tapping the sheet expands the Office timeline and the call/safety row.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
@@ -33,10 +33,19 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
   const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
   const dispatcherName = useAppState((s) => s.dispatcher.name);
 
+  // The driver has pulled up — move the rider to the identification screen,
+  // which is the one moment they check the plate before getting in.
+  useEffect(() => {
+    if (job?.status === 'at_pickup') navigation.replace('DriverArrived', { jobId });
+    if (job?.status === 'cancelled') navigation.popToTop();
+  }, [job?.status, jobId, navigation]);
+
   if (!job) return <ScreenContainer />;
 
-  const driverName = driver?.name ?? 'Marisol A.';
-  const carLine = vehicle ? `${vehicle.colour} ${vehicle.model}` : 'Silver Corolla';
+  // No invented fallbacks: a wrong driver name or car colour on this screen is
+  // actively dangerous, since it is what the rider matches against the kerb.
+  const driverName = driver?.name ?? '';
+  const carLine = vehicle ? `${vehicle.colour} ${vehicle.model}` : '';
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
