@@ -11,6 +11,7 @@
 // screens subscribe with the same mental model.
 
 import { useSyncExternalStore } from 'react';
+import { DEFAULT_DIAL_CODE } from '../constants';
 import { getSupabase } from '../supabase';
 
 export type ActorRole = 'customer' | 'driver' | 'dispatcher';
@@ -135,7 +136,7 @@ export function startAuthWatch(): void {
  * Normalise a typed number to E.164, which is what Supabase requires.
  * Accepts "415 220 8841" / "+1 415-220-8841" / "(415) 220 8841".
  */
-export function toE164(input: string, defaultCountryCode = '1'): string {
+export function toE164(input: string, defaultCountryCode = DEFAULT_DIAL_CODE): string {
   const digits = input.replace(/[^\d+]/g, '');
   if (digits.startsWith('+')) return digits;
   return `+${defaultCountryCode}${digits.replace(/^0+/, '')}`;

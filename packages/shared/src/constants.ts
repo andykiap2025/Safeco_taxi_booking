@@ -3,6 +3,11 @@
 export const PRODUCT_NAME = 'Safeco Taxi Booking';
 export const TAGLINE = 'A driver you can see coming';
 
+// Dial prefix the sign-in screen shows and that bare numbers are normalised
+// against. Papua New Guinea (+675) — the operation's home country. A wrong
+// value here silently sends OTPs to a different country's number space.
+export const DEFAULT_DIAL_CODE = '675';
+
 // PROVISIONAL tier list — design-export stand-ins; replace when the user
 // supplies the real fleet (CLAUDE.md "Fleet & vehicle tiers").
 // sortOrder is the upgrade ladder: upgrade-at-quote moves exactly one step up.

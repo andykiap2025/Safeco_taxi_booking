@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAGLINE } from '@safeco/shared';
+import { DEFAULT_DIAL_CODE, TAGLINE } from '@safeco/shared';
 import { sendPhoneOtp, verifyPhoneOtp } from '@safeco/shared/auth';
 import {
   borders,
@@ -37,7 +37,12 @@ import {
 } from '@safeco/shared/ui';
 
 const CODE_LENGTH = 6;
-const PHONE_PREFIX = '+1';
+// Dial code comes from the shared constant, never a literal here — hardcoding
+// one country's prefix silently mangles every number from anywhere else.
+const PHONE_PREFIX = `+${DEFAULT_DIAL_CODE}`;
+// Shortest national number worth attempting to send. PNG mobile numbers are
+// 8 digits; this only guards the button, the server does real validation.
+const MIN_NATIONAL_DIGITS = 7;
 
 // Logo tile: 72dp (4xl + sm) rounded square. The brand PNG has a white ground —
 // presented as a deliberate white tile in the glass system. The artwork is
@@ -101,7 +106,10 @@ export function SignInScreen() {
     setError(null);
     setBusy(true);
     try {
-      await sendPhoneOtp(`${PHONE_PREFIX}${phone}`);
+      // Pass the raw field value: toE164 applies the default dial code only
+      // when the user has not typed one, so "+675 8312 2058" does not become
+      // "+675+67583122058". The prefix bubble is display, not data.
+      await sendPhoneOtp(phone);
       setStage('code');
       setCode('');
     } catch (e) {
@@ -115,7 +123,7 @@ export function SignInScreen() {
     setError(null);
     setBusy(true);
     try {
-      await verifyPhoneOtp(`${PHONE_PREFIX}${phone}`, value);
+      await verifyPhoneOtp(phone, value);
       // No navigation here — the auth gate reacts to the new session.
     } catch (e) {
       setError((e as Error).message);
@@ -377,7 +385,7 @@ export function SignInScreen() {
             title="Send me a code"
             onPress={send}
             loading={busy}
-            disabled={busy || phone.replace(/\D/g, '').length < 6}
+            disabled={busy || phone.replace(/\D/g, '').length < MIN_NATIONAL_DIGITS}
             accessibilityLabel="Send me a code"
           />
         ) : (
