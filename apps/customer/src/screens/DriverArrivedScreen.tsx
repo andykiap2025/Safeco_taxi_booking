@@ -39,6 +39,13 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
   // could walk someone into the wrong car.
   const name = driver?.name ?? '';
   const firstName = name.split(' ')[0];
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
   const rideLine = driver ? `${driver.rating.toFixed(2)} ★ · ${thousands(driver.totalRides)} rides` : '';
   const carLine = vehicle ? `${vehicle.colour} ${vehicle.make} ${vehicle.model}` : '';
 
@@ -62,7 +69,9 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
       <View style={{ marginTop: spacing.xl }}>
         <GlassCard padding="lg">
           <View style={{ flexDirection: 'row', gap: spacing.md }}>
-            {/* Photo placeholder — faint ink tile on the light card. */}
+            {/* Driver photos are not captured anywhere, so this was a blank
+                grey square on every trip. Initials at least identify the
+                person the rider is looking for. */}
             <View
               style={{
                 width: PHOTO_TILE,
@@ -71,8 +80,14 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
                 backgroundColor: colors.surface.well,
                 borderWidth: borders.glass,
                 borderColor: colors.surface.border,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-            />
+            >
+              <LuminaText token="h2" color={colors.onSurface.secondary}>
+                {initials}
+              </LuminaText>
+            </View>
             <View style={{ flex: 1 }}>
               <LuminaText token="h3">{name}</LuminaText>
               <LuminaText token="bodySmall" color={colors.onSurface.muted} style={{ marginTop: 2 }}>

@@ -74,6 +74,14 @@ export function formatDuration(route?: RouteEstimate): string | undefined {
   return route ? `${Math.round(route.durationMin)} min` : undefined;
 }
 
+/** Short local date from an ISO timestamp: "14 Aug". */
+export function formatDate(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
 /** Local clock time from an ISO timestamp: "9:41". Used for the audit
  *  timeline and receipt lines, which previously hardcoded times. */
 export function formatClock(iso?: string): string {

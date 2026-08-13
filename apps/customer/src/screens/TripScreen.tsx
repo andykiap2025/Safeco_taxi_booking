@@ -4,7 +4,7 @@
 // amendment the customer confirms before anything changes (CLAUDE.md
 // "Fare amendments").
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -41,6 +41,12 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
   const [amendError, setAmendError] = useState<string | null>(null);
 
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+
+  // The driver completed the trip — move to rating and the receipt.
+  useEffect(() => {
+    if (job?.status === 'completed') navigation.replace('Arrival', { jobId });
+  }, [job?.status, jobId, navigation]);
+
   if (!job) return <ScreenContainer />;
 
   const addStopAllowed = !(ADD_STOP_DISALLOWED_TIERS as readonly TierId[]).includes(job.tier);
@@ -112,9 +118,17 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
             last
           />
 
-          <View style={{ marginTop: spacing.lg }}>
-            <NeuButton title="Arrive" onPress={() => navigation.replace('Arrival', { jobId })} />
-          </View>
+          {/* No "Arrive" button. Ending a trip is the driver's action; this
+              let a rider jump to rating and tipping while still moving, and
+              marked nothing complete. The effect below follows the real
+              status instead. */}
+          <LuminaText
+            token="caption"
+            color={colors.onSurface.muted}
+            style={{ marginTop: spacing.lg }}
+          >
+            Your driver ends the trip when you arrive.
+          </LuminaText>
         </GlassCard>
       </View>
 

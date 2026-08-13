@@ -176,12 +176,18 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
             </View>
           ) : null}
 
-          <View style={{ marginTop: spacing.lg }}>
-            <NeuButton
-              title="Driver has arrived"
-              onPress={() => navigation.replace('DriverArrived', { jobId })}
-            />
-          </View>
+          {/* No "Driver has arrived" button. The rider cannot know that, and
+              cannot make it true — it was a control that let them declare
+              someone else's action and jump to an identification screen for a
+              car that had not turned up. The driver marks arrival from their
+              own app and the effect above moves this screen on. */}
+          <LuminaText
+            token="caption"
+            color={colors.onSurface.muted}
+            style={{ marginTop: spacing.lg }}
+          >
+            This updates by itself when your driver arrives.
+          </LuminaText>
         </GlassCard>
       </View>
 

@@ -5,7 +5,13 @@
 
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatClock, formatDistance, formatDuration, formatMoney } from '@safeco/shared';
+import {
+  formatClock,
+  formatDate,
+  formatDistance,
+  formatDuration,
+  formatMoney,
+} from '@safeco/shared';
 import { borders, colors, shadows, spacing } from '@safeco/shared/lumina';
 import { BrandWordmark, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassBadge, GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
@@ -76,7 +82,7 @@ export function ReceiptScreen({ navigation, route }: ScreenProps<'Receipt'>) {
           SAFECO
         </BrandWordmark>
         <LuminaText token="overline" color={colors.text.muted} shadow="soft" style={{ marginTop: spacing.sm }}>
-          Request {job.number} · 12 Aug
+          Request {job.number} · {formatDate(job.createdAt)}
         </LuminaText>
 
         <LuminaText token="h2" style={{ marginTop: spacing['2xl'] }}>
