@@ -6,6 +6,7 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts",
     "./components": "./src/components/index.ts",
     "./lumina": "./src/lumina/index.ts",
     "./native": "./src/native/index.ts",

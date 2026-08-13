@@ -1,14 +1,18 @@
 // Sign in — phone OTP only (CLAUDE.md: no Google, no social providers).
-// Reference implementation of the Lumina Glass kit (v2 physical pass):
-// mesh-gradient container with ambient orbs, haloed glass cards, carved
-// phone well with a country bubble, jewel feature rows, gradient CTA pinned
-// to the bottom. Flow: "Send me a code" swaps the phone card for six code
-// wells that the mock timer fills; a completed code replaces to Plan.
+// Reference implementation of the Lumina Glass kit: mesh-gradient container
+// with ambient orbs, haloed glass cards, carved phone well with a country
+// bubble, jewel feature rows, gradient CTA pinned to the bottom.
+//
+// Live against Supabase phone auth. Flow: enter number -> "Send me a code"
+// dispatches a real SMS -> six wells capture the code -> verify. There is no
+// navigation on success: the auth gate in App.tsx swaps the navigator once
+// the session lands, so this screen never decides where the user goes next.
 
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAGLINE } from '@safeco/shared';
+import { sendPhoneOtp, verifyPhoneOtp } from '@safeco/shared/auth';
 import {
   borders,
   colors,
@@ -31,15 +35,9 @@ import {
   ScreenContainer,
   withOpacity,
 } from '@safeco/shared/ui';
-import type { ScreenProps } from '../navigation';
 
-const CODE = '417226';
+const CODE_LENGTH = 6;
 const PHONE_PREFIX = '+1';
-const MOCK_PHONE = '415 220 8841';
-// Mock cadence (behaviour, not style): one digit per tick, brief hold at the
-// end before the stack replaces to Plan.
-const DIGIT_TICK_MS = 280;
-const COMPLETE_HOLD_MS = 550;
 
 // Logo tile: 72dp (4xl + sm) rounded square. The brand PNG has a white ground —
 // presented as a deliberate white tile in the glass system. The artwork is
@@ -77,11 +75,13 @@ const VALUE_PROPS = [
   },
 ] as const;
 
-export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
+export function SignInScreen() {
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone] = useState(MOCK_PHONE);
-  const [digits, setDigits] = useState('');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Entrance stagger for the three main blocks: hero, cards, CTA.
   const blocks = useRef(
@@ -97,20 +97,42 @@ export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
     ).start();
   }, [blocks]);
 
-  // Mock OTP: the six wells fill themselves after a beat.
-  useEffect(() => {
-    if (stage !== 'code') return;
-    const timer = setInterval(() => {
-      setDigits((d) => (d.length < CODE.length ? CODE.slice(0, d.length + 1) : d));
-    }, DIGIT_TICK_MS);
-    return () => clearInterval(timer);
-  }, [stage]);
+  const send = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await sendPhoneOtp(`${PHONE_PREFIX}${phone}`);
+      setStage('code');
+      setCode('');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
+  const verify = async (value: string) => {
+    setError(null);
+    setBusy(true);
+    try {
+      await verifyPhoneOtp(`${PHONE_PREFIX}${phone}`, value);
+      // No navigation here — the auth gate reacts to the new session.
+    } catch (e) {
+      setError((e as Error).message);
+      setCode('');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Verify as soon as the sixth digit lands, the way a code screen should
+  // behave — no extra confirm tap.
   useEffect(() => {
-    if (digits.length !== CODE.length) return;
-    const t = setTimeout(() => navigation.replace('Plan'), COMPLETE_HOLD_MS);
-    return () => clearTimeout(t);
-  }, [digits, navigation]);
+    if (stage === 'code' && code.length === CODE_LENGTH && !busy) {
+      void verify(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, stage]);
 
   const blockStyle = (i: number) => ({
     opacity: blocks[i].opacity,
@@ -216,6 +238,7 @@ export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
                 keyboardType="phone-pad"
                 accessibilityLabel="Mobile number"
                 leftIcon={PHONE_PREFIX}
+                editable={!busy}
                 style={{ marginTop: spacing.md }}
               />
             </GlassCard>
@@ -224,60 +247,79 @@ export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
               <Text style={{ ...typography.overline, color: colors.onSurface.muted }}>
                 Verification code
               </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Verification code sent to ${PHONE_PREFIX} ${phone}`}
-                onPress={() => setDigits(CODE)}
-                style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}
-              >
-                {Array.from({ length: CODE.length }, (_, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flex: 1,
-                      height: WELL_SIZE,
-                      maxWidth: WELL_SIZE,
-                      borderRadius: radius.md,
-                      backgroundColor: colors.surface.well,
-                      borderWidth: borders.glass,
-                      borderColor:
-                        digits.length === i
-                          ? colors.glass.borderFocusTeal
-                          : colors.surface.border,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Mini carved relief, matching InsetInput v3. */}
+
+              {/* The six wells are the visual; a transparent input over them
+                  owns the keyboard and the real value. */}
+              <View style={{ position: 'relative', marginTop: spacing.md }}>
+                <TextInput
+                  value={code}
+                  onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+                  keyboardType="number-pad"
+                  textContentType="oneTimeCode"
+                  autoComplete="sms-otp"
+                  maxLength={CODE_LENGTH}
+                  autoFocus
+                  editable={!busy}
+                  accessibilityLabel="Verification code"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: WELL_SIZE,
+                    opacity: 0,
+                    zIndex: 2,
+                  }}
+                />
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  {Array.from({ length: CODE_LENGTH }, (_, i) => (
                     <View
-                      pointerEvents="none"
+                      key={i}
                       style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: radius.md / 2,
-                        right: radius.md / 2,
-                        height: borders.hairline,
-                        backgroundColor: withOpacity(colors.onSurface.primary, CARVE_TOP_ALPHA),
+                        flex: 1,
+                        height: WELL_SIZE,
+                        maxWidth: WELL_SIZE,
+                        borderRadius: radius.md,
+                        backgroundColor: colors.surface.well,
+                        borderWidth: borders.glass,
+                        borderColor:
+                          code.length === i ? colors.glass.borderFocusTeal : colors.surface.border,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
                       }}
-                    />
-                    <View
-                      pointerEvents="none"
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: radius.md / 2,
-                        right: radius.md / 2,
-                        height: borders.hairline,
-                        backgroundColor: withOpacity(colors.text.primary, CARVE_BOTTOM_ALPHA),
-                      }}
-                    />
-                    <Text style={{ ...typography.h2, color: colors.onSurface.primary }}>
-                      {digits[i] ?? ''}
-                    </Text>
-                  </View>
-                ))}
-              </Pressable>
+                    >
+                      {/* Mini carved relief, matching InsetInput v3. */}
+                      <View
+                        pointerEvents="none"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: radius.md / 2,
+                          right: radius.md / 2,
+                          height: borders.hairline,
+                          backgroundColor: withOpacity(colors.onSurface.primary, CARVE_TOP_ALPHA),
+                        }}
+                      />
+                      <View
+                        pointerEvents="none"
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: radius.md / 2,
+                          right: radius.md / 2,
+                          height: borders.hairline,
+                          backgroundColor: withOpacity(colors.text.primary, CARVE_BOTTOM_ALPHA),
+                        }}
+                      />
+                      <Text style={{ ...typography.h2, color: colors.onSurface.primary }}>
+                        {code[i] ?? ''}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
               <Text
                 style={{
                   ...typography.caption,
@@ -285,10 +327,32 @@ export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
                   marginTop: spacing.md,
                 }}
               >
-                {digits.length === CODE.length ? 'Verified · opening' : 'Verifying automatically'}
+                {busy
+                  ? 'Checking your code'
+                  : `Sent to ${PHONE_PREFIX} ${phone}`}
               </Text>
             </GlassCard>
           )}
+
+          {/* Failures are shown in place — never a silent no-op on tap. */}
+          {error ? (
+            <View style={{ marginTop: spacing.md }}>
+              <GlassCard>
+                <Text style={{ ...typography.overline, color: colors.accent.rose }}>
+                  Could not continue
+                </Text>
+                <Text
+                  style={{
+                    ...typography.body,
+                    color: colors.onSurface.secondary,
+                    marginTop: spacing.xs,
+                  }}
+                >
+                  {error}
+                </Text>
+              </GlassCard>
+            </View>
+          ) : null}
 
           {/* Why Safeco — one group, three flush rows, tinted icon tiles. */}
           <GlassGroup style={{ marginTop: spacing.md }}>
@@ -311,10 +375,24 @@ export function SignInScreen({ navigation }: ScreenProps<'SignIn'>) {
         {stage === 'phone' ? (
           <NeuButton
             title="Send me a code"
-            onPress={() => setStage('code')}
+            onPress={send}
+            loading={busy}
+            disabled={busy || phone.replace(/\D/g, '').length < 6}
             accessibilityLabel="Send me a code"
           />
-        ) : null}
+        ) : (
+          <NeuButton
+            variant="secondary"
+            title="Use a different number"
+            onPress={() => {
+              setStage('phone');
+              setCode('');
+              setError(null);
+            }}
+            disabled={busy}
+            accessibilityLabel="Use a different number"
+          />
+        )}
       </Animated.View>
     </ScreenContainer>
   );

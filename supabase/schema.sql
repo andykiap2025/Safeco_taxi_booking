@@ -160,6 +160,23 @@ as $$
   );
 $$;
 
+-- True when `other_id` is the dispatcher who handled a job the current user is
+-- on. CLAUDE.md requires customers and drivers see the dispatcher's real name
+-- ("At the Office · Ravi K."), which they cannot do without reading that row.
+create or replace function public.is_my_dispatcher(other_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.jobs j
+    where j.dispatcher_id = other_id
+      and (j.customer_id = auth.uid() or j.assigned_driver_id = auth.uid())
+  );
+$$;
+
 -- True when the current user may see a given job at all.
 create or replace function public.can_see_job(j_id uuid)
 returns boolean
@@ -180,6 +197,7 @@ $$;
 grant execute on function public.current_actor_role() to authenticated;
 grant execute on function public.is_dispatcher() to authenticated;
 grant execute on function public.shares_job_with(uuid) to authenticated;
+grant execute on function public.is_my_dispatcher(uuid) to authenticated;
 grant execute on function public.can_see_job(uuid) to authenticated;
 
 -- ── Row-level security ──────────────────────────────────────────────────────
@@ -198,9 +216,10 @@ drop policy if exists "own profile" on profiles;
 drop policy if exists "profiles readable" on profiles;
 create policy "profiles readable" on profiles for select to authenticated
   using (
-    id = auth.uid()                 -- yourself
-    or public.is_dispatcher()       -- the desk sees the whole roster
-    or public.shares_job_with(id)   -- your driver / your rider, while paired
+    id = auth.uid()                  -- yourself
+    or public.is_dispatcher()        -- the desk sees the whole roster
+    or public.shares_job_with(id)    -- your driver / your rider, while paired
+    or public.is_my_dispatcher(id)   -- the Office person who handled your job
   );
 
 -- Self-signup may only ever create a CUSTOMER. Without the role clause here a
@@ -314,6 +333,20 @@ create policy "dispatcher reads upgrade log" on upgrade_log for select to authen
 drop policy if exists "dispatcher writes upgrade log" on upgrade_log;
 create policy "dispatcher writes upgrade log" on upgrade_log for insert to authenticated
   with check (public.is_dispatcher());
+
+-- ── Realtime ────────────────────────────────────────────────────────────────
+-- Realtime is opt-in per table. Without these, reads still work but the desk
+-- would not see a new booking until someone reloaded — which is the entire
+-- point of a dispatch console. RLS still applies to realtime payloads, so each
+-- role only receives changes to rows it may already read.
+
+do $$ begin
+  alter publication supabase_realtime add table jobs;
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table profiles;
+exception when duplicate_object then null; end $$;
 
 -- ── Known gaps, deliberately left to application/server work ────────────────
 --

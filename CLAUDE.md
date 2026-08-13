@@ -23,9 +23,39 @@ A dispatch-based ride-hailing app for Android and iOS (React Native). Product na
 - The word **"dispatch" is internal only.** It may appear in code, comments, and internal docs to describe how jobs are assigned (dispatch queue, dispatch events, dispatcher role). It must **never appear in user-facing strings**.
 - In UI copy, drivers and customers see **"Office"** or the **dispatcher's actual name** — e.g. "At the Office · Ravi K.", "Ravi K. sent you this job" — never "dispatch desk", "dispatch", or "dispatcher".
 
-## Auth (decided 2026-08-12)
+## Auth (decided 2026-08-12; implemented 2026-08-13)
 
-**Phone OTP only.** No Google sign-in, no other OAuth/social providers — the desk operates on verified phone numbers. The design export's sign-in screen shows a "Continue with Google" button; drop it when implementing.
+**Phone OTP only.** No Google sign-in, no other OAuth/social providers — the desk operates on verified phone numbers. The design export's sign-in screen shows a "Continue with Google" button; it is dropped.
+
+- Implemented in `@safeco/shared/auth` (platform-agnostic — the Admin console is also web). `startAuthWatch()` once at startup; screens read `useAuth()`.
+- **Four stages, and they are not interchangeable:** `loading` (restoring a persisted session — render nothing, NEVER the sign-in screen, or every returning user sees a flash of it), `signedOut`, `needsProfile`, `ready`.
+- **Sign-in is not a route inside the app stack.** The gate in each `App.tsx` picks the navigator. A signed-out user must not be able to reach an app route by navigating, and an expired session must be able to eject a user mid-flow.
+- **First sign-in captures a name** (`FirstRunNameScreen`). `profiles.name` is NOT NULL and this is the name the driver and the Office see — a phone number in that slot reads as a broken record on the desk.
+- **Self-signup can only ever create `role = 'customer'`.** Enforced in RLS *and* by a trigger, not in app code. Driver and dispatcher accounts are provisioned by the Office.
+- A failed profile *read* must not sign the user out — that would discard a valid session over a transient network error.
+
+## Backend, data & security (2026-08-13)
+
+Supabase project is live (Sydney, `ap-southeast-2`). `supabase/schema.sql` is the single source of truth for schema AND policies; it is idempotent, so re-running it is the normal way to apply changes.
+
+- **Config via `EXPO_PUBLIC_*`**, referenced literally as `process.env.EXPO_PUBLIC_NAME` with dot notation. Expo **inlines these at build time** — destructuring or dynamic lookup silently yields `undefined`, and editing `.env` requires `npx expo start --clear`, not a reload. `.env` is gitignored; `.env.example` is committed per app.
+- The anon key is **designed to be public** and ships in the bundle. **RLS, not key secrecy, is what protects data.** The `service_role` key must never appear in an app, an `.env`, or this repo.
+- **Session storage is AsyncStorage, not `expo-secure-store`** — SDK 57 documents an iOS value ceiling around 2048 bytes, and an access + refresh token pair exceeds it. Auto-refresh is bound to `AppState`.
+- **The live store** (`@safeco/shared` → `data/live.ts`) keeps the same state shape screens already select against, hydrated from Supabase and kept current by realtime. It adds `sync: { status, error }`, because a network store can be loading and can fail — the mock could do neither.
+- **Never add client-side scoping filters** on top of RLS. One query returns the right rows for all three roles (customer → own, driver → assigned, desk → all); a duplicate filter in app code silently diverges from policy.
+- **Realtime is opt-in per table** and `jobs`/`profiles` are in the publication. Without it the desk would not see a booking until someone reloaded.
+- Derived figures must stay honest: `avgAssignSeconds` and `returnedToday` read 0 until the `job_events` timeline backs them. **Do not invent a plausible number to fill a stat tile.**
+
+### Production gates — MUST be true before real users or real money
+
+These are not backlog items; each is a way the product breaks a promise or leaks data.
+
+1. **Fare integrity.** RLS restricts which *rows* you may update, never which *columns* — a crafted client can currently `PATCH quoted_fare` on its own job. Every mutation touching `quoted_fare` / `status` / assignment must move behind a `SECURITY DEFINER` RPC that recomputes the quote server-side, and the direct update policy narrowed. The fare lock is a commercial promise; today it is only enforced by the UI.
+2. **Upgrade rate limit.** `UPGRADE_AT_QUOTE.rateLimitPerAccount` is enforced nowhere. It belongs in the same server-side path that writes `upgrade_log`, counting prior rows in the window.
+3. **Money is floating point.** Move to integer minor units before charges and reconciliation depend on the arithmetic.
+4. **No payment provider, no maps/location, no push.** Push is not optional polish: the whole dispatch model rests on reaching a driver inside a 2-minute confirm window.
+5. **Error, loading and offline states everywhere.** Any screen that renders an empty container when data is missing is a bug the mock store hid.
+6. **Accessibility parity.** Labels and roles on interactive elements is existing law; the driver and admin screens do not yet meet it.
 
 ## Platform & repo layout (updated 2026-08-12)
 
@@ -36,7 +66,7 @@ A dispatch-based ride-hailing app for Android and iOS (React Native). Product na
 - `eas.json` lives in `apps/driver` — EAS requires it in the app directory and auto-detects/archives the workspace root (documented monorepo setup). Run `eas` commands from `apps/driver`.
 - `apps/driver/metro.config.js` pins `watchFolders`/`nodeModulesPaths` to the workspace root. SDK 57 auto-detects monorepos; the explicit config is deliberate belt-and-braces — keep it (same file pattern in every app).
 - **Admin app = Expo with web enabled** (decided 2026-08-12 to unblock the full build; supersedable): one codebase serves dispatcher mobile and the desk's browser (wide two-pane console ≥900px via `react-native-web`).
-- **Navigation: `@react-navigation/native-stack`** in all apps. **State/data: simulation-first** — UI talks only to the mock store API in `@safeco/shared` (seeded from the design export) until Supabase credentials exist; Postgres schema ready in `supabase/schema.sql`.
+- **Navigation: `@react-navigation/native-stack`** in all apps. **State/data: live on Supabase** (since 2026-08-13) — see "Backend, data & security" above. The seeded in-memory mock store is deprecated and being removed screen group by screen group.
 - **Fonts:** `@expo-google-fonts/source-serif-4` per app; `typography` token names in `theme.ts` match its family names. Build plan: `docs/BUILD_PLAN.md`.
 
 ## Visual direction (decided 2026-08-12)
@@ -123,7 +153,7 @@ Supersedes the light paper palette and the "Visual voice" section below. Directi
 - **UI kit at `@safeco/shared/ui`**: ScreenContainer, GlassCard, GlassGroup, NeuButton, InsetInput, GlassListItem, GlassBadge, GlassModal, GlassHeader, GlassTabBar. Components accept `variant` props and consume tokens exclusively.
 - **Android reality (documented adaptations, honest by design):** iOS `shadow*` props don't render on Android — only `elevation` (+ `shadowColor` tint on API 28+). Therefore: colored glow/ambient effects = absolutely-positioned **gradient halo layers**, not shadow props; neumorphic raised/pressed and input inset = **layered highlight/shade views + gradients** (extension of the approved emboss approach A); real background blur is deliberately NOT used (Android perf) — glass = translucent fills + 1px borders, `expo-blur` may be adopted later for modals only.
 - Typography: system sans with the spec's scale/weights; `BrandWordmark` (serif "SAFECO") survives as the only brand mark. Inputs never show the Android underline. Text always uses a typography token.
-- **Survives from earlier decisions:** naming rules (Office, never dispatch), the map rule, tier selection carried by prominence (now glow + elevated glass, still no borders/checkmarks), ≥48dp touch targets, phone-OTP auth, all business rules, simulation-first data, a11y labels/roles on interactive elements.
+- **Survives from earlier decisions:** naming rules (Office, never dispatch), the map rule, tier selection carried by prominence (now glow + elevated glass, still no borders/checkmarks), ≥48dp touch targets, phone-OTP auth, all business rules, a11y labels/roles on interactive elements. (Simulation-first data is superseded — the apps are live on Supabase.)
 - Migration status: ALL screens in all three apps are Lumina (rollout completed 2026-08-12). The old paper-token kit (`@safeco/shared/components`) survives only for: BrandWordmark, MonoText, CountdownBadge, MapPlate (Lumina-dark), and the non-visual `useMockState`.
 - **Grouping amendment (2026-08-13, user directive): related items share ONE container.** A column of individual cards is banned — it reads as N unrelated things and wastes the vertical space the content needs. Related rows stack flush inside one `GlassGroup` (or one `GlassCard`), divided by hairline separators, with a single border/shadow/halo around the set. `GlassListItem` is therefore a **row, not a card**: no fill, border, radius or shadow of its own; it takes its horizontal inset from `GroupContext` (zero when dropped straight into an already-padded card). Separators inset to the title's left edge, past the icon tile. Selection inside a group is a **teal tint + 3dp teal left bar** — a full focus border cannot work mid-group. Grouping applies to information AND actions, and to multi-card screens: split cards covering one subject get merged into one card with an internal hairline. **The one exception is the tier-selection screen**, where the cards must stay separate because selection is carried by elevation.
 - **Surface amendment (2026-08-12, user directive): cards and buttons are WHITE/GREY, not translucent glass.** Tokens: `colors.surface.*` (near-opaque white card, white button, grey wells/pressed states) with **dark ink text on surfaces** via `colors.onSurface.*`. The mesh gradient + orbs remain the ground; free-standing text on the gradient stays white WITH text shadows; text on light surfaces is dark ink with NO text shadow. The primary button keeps its teal glow halo + floating shadow over its white fill. Icon tiles/badges keep their colour tints.
@@ -152,6 +182,8 @@ User feedback: the Broadsheet newsprint styling "looks like a newspaper cutting 
 
 - Real tier list (name, description, price basis per tier) — user to supply; provisional Go/XL/Share stands in until then (encoded in `packages/shared/src/constants.ts` `TIERS`). Tier-screen layout is already settled: stacked cards.
 - Upgrade-at-quote defaults pending ops tuning: wait threshold (300s) and per-account rate limit (2 per 30 days) in `packages/shared/src/constants.ts` are placeholders.
+- **Phone provider must be enabled** in Supabase (Auth → Providers → Phone). Until then no one can sign in. Test numbers with fixed codes work without an SMS provider or Twilio account.
+- **Migration status (2026-08-13):** shared layer (`auth`, `data/repo`, `data/live`) and the customer sign-in/first-run/auth gate are live. Customer booking + trip screens, the driver app and the Office console still call `mockStore`. Migrate a screen group at a time; each group needs loading and error states, because the mock could not fail and Supabase can.
 
 ## Known workflow hazard (Windows + SDK 57 dev server)
 

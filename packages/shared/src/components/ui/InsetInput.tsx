@@ -22,7 +22,24 @@ import {
 import { GlowHalo } from './GlowHalo';
 import { withOpacity } from './util';
 
-export interface InsetInputProps {
+/** Standard TextInput props forwarded straight through. Kept as an explicit
+ *  list rather than `...TextInputProps` so the control's own styling contract
+ *  (colours, height, carve) cannot be overridden from a call site. */
+type ForwardedInputProps = Pick<
+  TextInputProps,
+  | 'editable'
+  | 'autoCapitalize'
+  | 'autoComplete'
+  | 'autoCorrect'
+  | 'textContentType'
+  | 'inputMode'
+  | 'returnKeyType'
+  | 'onSubmitEditing'
+  | 'secureTextEntry'
+  | 'multiline'
+>;
+
+export interface InsetInputProps extends ForwardedInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -62,6 +79,7 @@ export function InsetInput({
   onFocus,
   onBlur,
   accessibilityLabel,
+  ...forwarded
 }: InsetInputProps) {
   const [focused, setFocused] = useState(false);
   const haloOpacity = useRef(new Animated.Value(0)).current;
@@ -161,6 +179,7 @@ export function InsetInput({
         ) : null}
 
         <TextInput
+          {...forwarded}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -183,7 +202,13 @@ export function InsetInput({
           style={{
             flex: 1,
             ...typography.input,
-            color: colors.onSurface.primary,
+            // A field that cannot be typed in must not look identical to one
+            // that can — this is the only visual cue while a request is in
+            // flight.
+            color:
+              forwarded.editable === false
+                ? colors.onSurface.muted
+                : colors.onSurface.primary,
             paddingVertical: 0,
           }}
         />
