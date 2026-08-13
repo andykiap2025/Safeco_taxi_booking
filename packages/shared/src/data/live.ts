@@ -138,6 +138,30 @@ export function job(id: string): JobRequest | undefined {
   return state.jobs.find((j) => j.id === id);
 }
 
+// ── Derived-value cache ─────────────────────────────────────────────────────
+//
+// Derived selectors (recents, earnings) MUST return the same reference until
+// the state actually changes. They are used as useSyncExternalStore snapshots,
+// which React compares by reference — a function that builds a fresh array on
+// every call reads as "changed" on every render, and React loops until
+// "Maximum update depth exceeded" kills the app. This crashed the customer
+// app on its first ever device run (2026-08-14); it can never crash in a unit
+// test, because nothing outside React compares snapshot identity.
+//
+// `state` is replaced immutably on every commit, so caching per state object
+// via WeakMap gives stable references between commits and automatic
+// invalidation on change.
+const deriveCache = new WeakMap<AppState, Map<string, unknown>>();
+function derive<T>(key: string, compute: () => T): T {
+  let bucket = deriveCache.get(state);
+  if (!bucket) {
+    bucket = new Map();
+    deriveCache.set(state, bucket);
+  }
+  if (!bucket.has(key)) bucket.set(key, compute());
+  return bucket.get(key) as T;
+}
+
 export interface RecentPlace {
   address: string;
   route?: { distanceKm: number; durationMin: number };
@@ -150,6 +174,10 @@ export interface RecentPlace {
  * everyone, including a brand new account.
  */
 export function recentDestinations(limit = 3): RecentPlace[] {
+  return derive(`recents:${limit}`, () => computeRecents(limit));
+}
+
+function computeRecents(limit: number): RecentPlace[] {
   const seen = new Map<string, RecentPlace>();
   for (const j of [...state.jobs].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -186,9 +214,14 @@ const DAY_PARTS: Array<{ period: string; from: number; to: number }> = [
  * is owed. Commission is not modelled anywhere yet — when it is, it belongs
  * here and NOT in the display layer.
  */
+const EMPTY_EARNINGS: DayEarnings = { earned: 0, trips: 0, ledger: [] };
+
 export function earningsToday(driverId: string | undefined): DayEarnings {
-  const empty: DayEarnings = { earned: 0, trips: 0, ledger: [] };
-  if (!driverId) return empty;
+  if (!driverId) return EMPTY_EARNINGS;
+  return derive(`earnings:${driverId}`, () => computeEarnings(driverId));
+}
+
+function computeEarnings(driverId: string): DayEarnings {
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);
