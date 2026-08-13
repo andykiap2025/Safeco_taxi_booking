@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/styles.css">
+<script src="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<style>
+@keyframes dsp-pulse{0%{transform:scale(.4);opacity:.55}100%{transform:scale(1.9);opacity:0}}
+@keyframes dsp-caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>
+</helmet>
+<div style="height:812px;display:flex;flex-direction:column;background:#f3f2f2;color:#201e1d;font-family:'Source Serif 4',Georgia,serif;overflow:hidden">
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:34px 26px 26px;gap:0">
+<div style="font:700 42px/1 'Source Serif 4',Georgia,serif;letter-spacing:.02em">DISPATCH</div>
+<div style="height:4px;background:#201e1d;margin-top:12px"></div>
+<div style="display:flex;justify-content:space-between;padding:7px 0;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d"><span>City rides</span><span>Edition · Tue 12 Aug</span></div>
+<div style="height:1px;background:#201e1d"></div>
+<div style="margin-top:36px;font:600 33px/1.12 'Source Serif 4',Georgia,serif;text-wrap:pretty">Get a car, plainly&nbsp;priced.</div>
+<div style="margin-top:14px;font:400 16px/1.5 'Source Serif 4',Georgia,serif;color:#444141;max-width:19em;text-wrap:pretty">Every fare is quoted before you book, itemised after. No surge multipliers, ever.</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:15px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Mobile number</div>
+<div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #201e1d;padding:9px 2px">
+<span style="font:400 19px/1 'Source Serif 4',Georgia,serif;color:#605d5d">+1</span>
+<span style="font:400 19px/1 'Source Serif 4',Georgia,serif;letter-spacing:.04em">415 220 8841</span>
+<span style="width:2px;height:22px;background:#0088b0;animation:dsp-caret 1.1s step-end infinite"></span>
+</div>
+</div>
+<div onClick="{{ goPickup }}" style="height:54px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 18px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786">Send me a code</div>
+<div onClick="{{ goPickup }}" style="height:52px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-google-logo" style="font-size:19px"></i>Continue with Google</div>
+<div style="font:400 12px/1.5 'Source Serif 4',Georgia,serif;color:#7d7979;text-align:center">By continuing you accept the rider terms.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPickup }}" hint-placeholder-val="{{ false }}">
+<dc-import name="MapPlate" h="{{ mapH }}" route="{{ true }}" label="pickup · kingsway ward" hint-size="100%,300px"></dc-import>
+<div style="flex:1;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);margin-top:-14px;position:relative;padding:20px 22px 18px;display:flex;flex-direction:column">
+<sc-if value="{{ sheetHandle }}" hint-placeholder-val="{{ true }}">
+<div style="width:44px;height:3px;background:#bab6b6;border-radius:2px;margin:-8px auto 14px"></div>
+</sc-if>
+<div style="font:600 27px/1.1 'Source Serif 4',Georgia,serif">Where to?</div>
+<div style="margin-top:16px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #d7d3d3">
+<span style="width:13px;height:13px;border:3px solid #201e1d;border-radius:50%;flex:none"></span>
+<span style="font:400 16px/1.3 'Source Serif 4',Georgia,serif;flex:1">Home · 14 Kingsway</span>
+<span style="font:400 11px/1 ui-monospace,Menlo,monospace;color:#605d5d;letter-spacing:.08em">EDIT</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:2px solid #0088b0">
+<span style="width:13px;height:13px;background:#d6006c;flex:none"></span>
+<span style="font:400 16px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979;flex:1">Enter destination</span>
+<span style="width:2px;height:20px;background:#0088b0;animation:dsp-caret 1.1s step-end infinite"></span>
+</div>
+</div>
+<div style="margin-top:18px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Recent</div>
+<div style="margin-top:4px;display:flex;flex-direction:column">
+<div onClick="{{ goOptions }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-briefcase" style="font-size:22px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:400 16px/1.25 'Source Serif 4',Georgia,serif">Studio · 8 Rowan St</span><span style="display:block;font:400 13px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">4.2 km · 12 min</span></span>
+<i class="ph-duotone ph-arrow-up-right" style="font-size:17px;color:#7d7979"></i>
+</div>
+<div onClick="{{ goOptions }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-boat" style="font-size:22px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:400 16px/1.25 'Source Serif 4',Georgia,serif">Ferry Terminal</span><span style="display:block;font:400 13px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">6.8 km · 19 min</span></span>
+<i class="ph-duotone ph-arrow-up-right" style="font-size:17px;color:#7d7979"></i>
+</div>
+<div onClick="{{ goOptions }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;cursor:pointer" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-storefront" style="font-size:22px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:400 16px/1.25 'Source Serif 4',Georgia,serif">Rowan St Market</span><span style="display:block;font:400 13px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">2.1 km · 7 min</span></span>
+<i class="ph-duotone ph-arrow-up-right" style="font-size:17px;color:#7d7979"></i>
+</div>
+</div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:14px">
+<div onClick="{{ goScheduled }}" style="flex:1;height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-calendar-dots" style="font-size:18px"></i>Schedule</div>
+<div onClick="{{ goOptions }}" style="flex:1;height:48px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786">Ride now</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOptions }}" hint-placeholder-val="{{ false }}">
+<dc-import name="MapPlate" h="{{ mapHShort }}" route="{{ true }}" label="14 kingsway → 8 rowan st" hint-size="100%,220px"></dc-import>
+<div style="flex:1;padding:18px 22px 16px;display:flex;flex-direction:column;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative;background:#f3f2f2">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font:600 25px/1.1 'Source Serif 4',Georgia,serif">Choose a car</div>
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:#605d5d">Fares fixed</div>
+</div>
+
+<sc-if value="{{ cardBare }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:2px">
+<div onClick="{{ pickGo }}" style="display:flex;align-items:center;gap:14px;padding:14px 8px;cursor:pointer;background:{{ bgGo }}" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-car-simple" style="font-size:30px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">Go<span style="font:400 13px/1 ui-monospace,Menlo,monospace;color:#7d7979;margin-left:9px">4 seats</span></span><span style="display:block;font:400 14px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">3 min away · drops 9:41</span></span>
+<span style="font:600 19px/1 'Source Serif 4',Georgia,serif">$12.40</span>
+</div>
+<div onClick="{{ pickXL }}" style="display:flex;align-items:center;gap:14px;padding:14px 8px;cursor:pointer;background:{{ bgXL }}" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-van" style="font-size:30px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">XL<span style="font:400 13px/1 ui-monospace,Menlo,monospace;color:#7d7979;margin-left:9px">6 seats</span></span><span style="display:block;font:400 14px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">6 min away · drops 9:44</span></span>
+<span style="font:600 19px/1 'Source Serif 4',Georgia,serif">$18.90</span>
+</div>
+<div onClick="{{ pickShare }}" style="display:flex;align-items:center;gap:14px;padding:14px 8px;cursor:pointer;background:{{ bgShare }}" style-hover="background:#eae9e9">
+<i class="ph-duotone ph-users-three" style="font-size:30px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">Share<span style="font:400 13px/1 ui-monospace,Menlo,monospace;color:#7d7979;margin-left:9px">1 stop</span></span><span style="display:block;font:400 14px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">5 min away · drops 9:52</span></span>
+<span style="text-align:right"><span style="display:block;font:600 19px/1 'Source Serif 4',Georgia,serif;color:#aa0b56">$8.20</span><span style="display:block;font:400 13px/1.4 'Source Serif 4',Georgia,serif;color:#7d7979;text-decoration:line-through">$12.40</span></span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ cardRuled }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px">
+<div style="display:flex;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d;padding-bottom:7px;border-bottom:2px solid #201e1d"><span style="flex:1">Service</span><span style="width:78px">Pickup</span><span style="width:64px;text-align:right">Fare</span></div>
+<div onClick="{{ pickGo }}" style="display:flex;align-items:baseline;padding:15px 0;border-bottom:1px solid #d7d3d3;cursor:pointer;background:{{ bgGo }}" style-hover="background:#eae9e9"><span style="flex:1;font:600 19px/1.1 'Source Serif 4',Georgia,serif">Go<span style="font:400 14px/1 'Source Serif 4',Georgia,serif;color:#7d7979;margin-left:8px">4 seats</span></span><span style="width:78px;font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d">3 min</span><span style="width:64px;text-align:right;font:600 19px/1 'Source Serif 4',Georgia,serif">$12.40</span></div>
+<div onClick="{{ pickXL }}" style="display:flex;align-items:baseline;padding:15px 0;border-bottom:1px solid #d7d3d3;cursor:pointer;background:{{ bgXL }}" style-hover="background:#eae9e9"><span style="flex:1;font:600 19px/1.1 'Source Serif 4',Georgia,serif">XL<span style="font:400 14px/1 'Source Serif 4',Georgia,serif;color:#7d7979;margin-left:8px">6 seats</span></span><span style="width:78px;font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d">6 min</span><span style="width:64px;text-align:right;font:600 19px/1 'Source Serif 4',Georgia,serif">$18.90</span></div>
+<div onClick="{{ pickShare }}" style="display:flex;align-items:baseline;padding:15px 0;border-bottom:1px solid #d7d3d3;cursor:pointer;background:{{ bgShare }}" style-hover="background:#eae9e9"><span style="flex:1;font:600 19px/1.1 'Source Serif 4',Georgia,serif">Share<span style="font:400 14px/1 'Source Serif 4',Georgia,serif;color:#7d7979;margin-left:8px">1 stop</span></span><span style="width:78px;font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d">5 min</span><span style="width:64px;text-align:right;font:600 19px/1 'Source Serif 4',Georgia,serif;color:#aa0b56">$8.20</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ cardBoxed }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+<div onClick="{{ pickGo }}" style="border:1px solid #d7d3d3;background:#eae9e9;border-radius:2px;padding:13px 14px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:0 1px 2px rgba(45,43,43,.14);outline:{{ ringGo }}" style-hover="border-color:#0088b0">
+<i class="ph-duotone ph-car-simple" style="font-size:28px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">Go</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">4 seats · 3 min away</span></span>
+<span style="font:600 19px/1 'Source Serif 4',Georgia,serif">$12.40</span>
+</div>
+<div onClick="{{ pickXL }}" style="border:1px solid #d7d3d3;background:#eae9e9;border-radius:2px;padding:13px 14px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:0 1px 2px rgba(45,43,43,.14);outline:{{ ringXL }}" style-hover="border-color:#0088b0">
+<i class="ph-duotone ph-van" style="font-size:28px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">XL</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">6 seats · 6 min away</span></span>
+<span style="font:600 19px/1 'Source Serif 4',Georgia,serif">$18.90</span>
+</div>
+<div onClick="{{ pickShare }}" style="border:1px solid #d7d3d3;background:#eae9e9;border-radius:2px;padding:13px 14px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:0 1px 2px rgba(45,43,43,.14);outline:{{ ringShare }}" style-hover="border-color:#0088b0">
+<i class="ph-duotone ph-users-three" style="font-size:28px;color:#0088b0"></i>
+<span style="flex:1"><span style="display:block;font:600 18px/1.2 'Source Serif 4',Georgia,serif">Share</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">1 stop · 5 min away</span></span>
+<span style="font:600 19px/1 'Source Serif 4',Georgia,serif;color:#aa0b56">$8.20</span>
+</div>
+</div>
+</sc-if>
+
+<div style="margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:11px;padding-top:12px;border-top:1px solid #d7d3d3"><i class="ph-duotone ph-credit-card" style="font-size:21px;color:#0088b0"></i><span style="flex:1;font:400 15px/1 'Source Serif 4',Georgia,serif">Visa · 4417</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">CHANGE</span></div>
+<div onClick="{{ goMatching }}" style="height:54px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:2px;font:600 18px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786">Book {{ tierLabel }} · {{ tierPrice }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMatching }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ goDeskQueue }}" style="flex:1;display:flex;flex-direction:column;cursor:pointer">
+<div style="position:relative">
+<dc-import name="MapPlate" h="{{ mapHTall }}" route="{{ true }}" label="dispatching · 6 cars in ward" hint-size="100%,420px"></dc-import>
+<div style="position:absolute;left:60px;top:94px;width:40px;height:40px;border-radius:50%;background:#0088b0;animation:dsp-pulse 1.8s ease-out infinite"></div>
+<div style="position:absolute;left:60px;top:94px;width:40px;height:40px;border-radius:50%;background:#0088b0;animation:dsp-pulse 1.8s ease-out .9s infinite"></div>
+</div>
+<div style="flex:1;padding:22px;display:flex;flex-direction:column;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Request no. 40 118 · sent to dispatch</div>
+<div style="margin-top:9px;font:600 29px/1.1 'Source Serif 4',Georgia,serif">Dispatch is assigning your car</div>
+<div style="margin-top:10px;font:400 16px/1.5 'Source Serif 4',Georgia,serif;color:#444141;max-width:20em">The dispatch desk picks the nearest free driver and sends them to 14 Kingsway. Your $12.40 fare is already locked.</div>
+<div style="margin-top:18px;display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:11px"><i class="ph-duotone ph-check-circle" style="font-size:20px;color:#0088b0"></i><span style="flex:1;font:400 15px/1.2 'Source Serif 4',Georgia,serif">Request received · 9:28</span></div>
+<div style="display:flex;align-items:center;gap:11px"><i class="ph-duotone ph-headset" style="font-size:20px;color:#0088b0"></i><span style="flex:1;font:400 15px/1.2 'Source Serif 4',Georgia,serif">At the dispatch desk · Ravi K.</span><span style="font:400 12px/1 ui-monospace,Menlo,monospace;color:#7d7979">NOW</span></div>
+<div style="display:flex;align-items:center;gap:11px;opacity:.45"><i class="ph-duotone ph-steering-wheel" style="font-size:20px;color:#201e1d"></i><span style="flex:1;font:400 15px/1.2 'Source Serif 4',Georgia,serif">Driver assigned &amp; on the way</span></div>
+</div>
+<div style="margin-top:16px;display:flex;gap:6px">
+<span style="flex:1;height:6px;background:#0088b0"></span><span style="flex:1;height:6px;background:#0088b0"></span><span style="flex:1;height:6px;background:#d7d3d3"></span>
+</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="font:400 13px/1 ui-monospace,Menlo,monospace;color:#7d7979;letter-spacing:.06em">TAP ANYWHERE TO CONTINUE</div>
+<div onClick="{{ goOptions }}" style="height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Cancel request</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDeskQueue }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px 22px 18px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:700 22px/1 'Source Serif 4',Georgia,serif;letter-spacing:.02em">DISPATCH</div>
+<div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:#0088b0"></span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">RAVI K. · ON DESK</span></div>
+</div>
+<div style="height:3px;background:#201e1d;margin-top:11px"></div>
+<div style="height:1px;background:#201e1d;margin-top:3px"></div>
+<div style="margin-top:16px;display:flex;justify-content:space-between">
+<span><span style="display:block;font:600 24px/1 'Source Serif 4',Georgia,serif">14</span><span style="display:block;margin-top:5px;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">CARS FREE</span></span>
+<span><span style="display:block;font:600 24px/1 'Source Serif 4',Georgia,serif;color:#aa0b56">3</span><span style="display:block;margin-top:5px;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">WAITING</span></span>
+<span><span style="display:block;font:600 24px/1 'Source Serif 4',Georgia,serif">42s</span><span style="display:block;margin-top:5px;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">AVG ASSIGN</span></span>
+<span><span style="display:block;font:600 24px/1 'Source Serif 4',Georgia,serif">128</span><span style="display:block;margin-top:5px;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">TODAY</span></span>
+</div>
+<div style="margin-top:20px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Needs a car</div>
+<div style="margin-top:8px;display:flex;flex-direction:column">
+<div onClick="{{ goDeskAssign }}" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #d7d3d3;background:#cbeeff;cursor:pointer" style-hover="background:#e9f8ff">
+<span style="font:600 14px/1 ui-monospace,Menlo,monospace;width:48px">40118</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Amara O. · Go</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">14 Kingsway → 8 Rowan St</span></span>
+<span style="text-align:right"><span style="display:block;font:600 15px/1.2 'Source Serif 4',Georgia,serif">$12.40</span><span style="display:block;font:400 12px/1.3 ui-monospace,Menlo,monospace;color:#7d7979">0:22</span></span>
+</div>
+<div onClick="{{ goDeskAssign }}" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<span style="font:600 14px/1 ui-monospace,Menlo,monospace;width:48px">40119</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Tomas R. · XL</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">Ferry Terminal → 12 Alder Row</span></span>
+<span style="text-align:right"><span style="display:block;font:600 15px/1.2 'Source Serif 4',Georgia,serif">$18.90</span><span style="display:block;font:400 12px/1.3 ui-monospace,Menlo,monospace;color:#7d7979">0:48</span></span>
+</div>
+<div onClick="{{ goDeskAssign }}" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<span style="font:600 14px/1 ui-monospace,Menlo,monospace;width:48px">40120</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Lin H. · Share</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">Rowan St Market → 3 Quay St</span></span>
+<span style="text-align:right"><span style="display:block;font:600 15px/1.2 'Source Serif 4',Georgia,serif">$8.20</span><span style="display:block;font:400 12px/1.3 ui-monospace,Menlo,monospace;color:#aa0b56">1:34</span></span>
+</div>
+</div>
+<div style="margin-top:18px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Running</div>
+<div style="margin-top:8px">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #d7d3d3"><i class="ph-duotone ph-car" style="font-size:20px;color:#0088b0"></i><span style="flex:1;font:400 15px/1.25 'Source Serif 4',Georgia,serif">40117 · Beatriz S. → T2<span style="display:block;font:400 12px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">Jonas P. · en route, 8 min out</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3"><i class="ph-duotone ph-car" style="font-size:20px;color:#0088b0"></i><span style="flex:1;font:400 15px/1.25 'Source Serif 4',Georgia,serif">40116 · Kofi A. → Kingsway<span style="display:block;font:400 12px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">Ify N. · on trip, drops 9:39</span></span></div>
+</div>
+<div style="margin-top:auto;padding-top:14px">
+<div onClick="{{ goDeskAssign }}" style="height:52px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:2px;font:600 17px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786"><i class="ph-duotone ph-steering-wheel" style="font-size:19px"></i>Assign oldest request</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDeskAssign }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:22px 22px 18px">
+<div style="display:flex;align-items:center;gap:12px">
+<div onClick="{{ goDeskQueue }}" style="width:38px;height:38px;margin-left:-8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-arrow-left" style="font-size:21px"></i></div>
+<div style="font:600 22px/1.1 'Source Serif 4',Georgia,serif">Assign 40118</div>
+<div style="margin-left:auto;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#aa0b56">0:22 WAITING</div>
+</div>
+<div style="margin-top:14px;font:600 19px/1.25 'Source Serif 4',Georgia,serif">Amara O. · Go · $12.40 fixed</div>
+<div style="margin-top:5px;font:400 15px/1.45 'Source Serif 4',Georgia,serif;color:#605d5d">14 Kingsway → 8 Rowan St · 4.2 km<br><span style="font-style:italic">“waiting by the newsstand”</span></div>
+<div style="margin-top:14px">
+<dc-import name="MapPlate" h="{{ 170 }}" route="{{ true }}" car="{{ true }}" label="free cars near pickup" hint-size="100%,170px"></dc-import>
+</div>
+<div style="margin-top:16px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Choose driver &amp; car</div>
+<div style="margin-top:8px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #d7d3d3;background:#cbeeff;cursor:pointer">
+<span style="width:16px;height:16px;border:2px solid #0088b0;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:#0088b0"></span></span>
+<span style="flex:1"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Marisol A. · 4.94 ★</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">Silver Corolla · KB 41 508</span></span>
+<span style="font:600 15px/1 'Source Serif 4',Georgia,serif">3 min</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<span style="width:16px;height:16px;border:2px solid #bab6b6;border-radius:50%;flex:none"></span>
+<span style="flex:1"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Jonas P. · 4.88 ★</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">White i20 · KB 22 741</span></span>
+<span style="font:600 15px/1 'Source Serif 4',Georgia,serif">6 min</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9">
+<span style="width:16px;height:16px;border:2px solid #bab6b6;border-radius:50%;flex:none"></span>
+<span style="flex:1"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">Ify N. · 4.97 ★</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">Grey Ciaz · KB 60 133</span></span>
+<span style="font:600 15px/1 'Source Serif 4',Georgia,serif">9 min</span>
+</div>
+</div>
+<div style="margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:10px">
+<div style="font:400 13px/1.45 'Source Serif 4',Georgia,serif;color:#7d7979">Marisol gets an alert with Amara's pickup pin; Amara starts seeing the car move.</div>
+<div style="display:flex;gap:10px">
+<div style="flex:none;padding:0 16px;height:50px;border:1px solid #201e1d;display:flex;align-items:center;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Hold</div>
+<div onClick="{{ goDriverAlert }}" style="flex:1;height:50px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786"><i class="ph-duotone ph-paper-plane-tilt" style="font-size:18px"></i>Assign Marisol</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDriverAlert }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column">
+<div style="padding:22px 22px 16px;background:#fff1f4">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:12px;height:12px;border-radius:50%;background:#d6006c;animation:dsp-pulse 1.3s ease-out infinite"></span>
+<span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#aa0b56">Dispatch alert · job 40118</span>
+<span style="margin-left:auto;font:600 16px/1 ui-monospace,Menlo,monospace;color:#aa0b56">1:52</span>
+</div>
+<div style="margin-top:12px;font:600 30px/1.1 'Source Serif 4',Georgia,serif">Pickup assigned to you</div>
+<div style="margin-top:8px;font:400 16px/1.5 'Source Serif 4',Georgia,serif;color:#444141">Ravi K. at the desk sent you Amara O. — 3 min away, at the corner newsstand.</div>
+</div>
+<dc-import name="MapPlate" h="{{ 258 }}" route="{{ true }}" car="{{ true }}" label="to pickup · 1.1 km" hint-size="100%,258px"></dc-import>
+<div style="flex:1;padding:18px 22px;display:flex;flex-direction:column;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative">
+<div style="display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:11px"><span style="width:11px;height:11px;border:3px solid #201e1d;border-radius:50%;flex:none"></span><span style="flex:1;font:400 16px/1.25 'Source Serif 4',Georgia,serif">14 Kingsway<span style="display:block;font:400 13px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">Pickup · 1.1 km · 3 min</span></span></div>
+<div style="display:flex;align-items:center;gap:11px"><span style="width:11px;height:11px;background:#d6006c;flex:none"></span><span style="flex:1;font:400 16px/1.25 'Source Serif 4',Georgia,serif">8 Rowan St<span style="display:block;font:400 13px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979">Drop · 4.2 km · 12 min</span></span></div>
+</div>
+<div style="margin-top:14px;display:flex;align-items:baseline;justify-content:space-between;padding-top:14px;border-top:1px solid #d7d3d3">
+<span style="font:600 26px/1 'Source Serif 4',Georgia,serif">$12.40</span>
+<span style="font:400 14px/1 'Source Serif 4',Georgia,serif;color:#605d5d">Go · fare fixed by dispatch</span>
+</div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:14px">
+<div onClick="{{ goDeskQueue }}" style="flex:none;padding:0 16px;height:52px;border:1px solid #201e1d;display:flex;align-items:center;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Can't take it</div>
+<div onClick="{{ goApproach }}" style="flex:1;height:52px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:2px;font:600 17px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786"><i class="ph-duotone ph-navigation-arrow" style="font-size:18px"></i>Accept &amp; navigate</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isApproach }}" hint-placeholder-val="{{ false }}">
+<dc-import name="MapPlate" h="{{ mapHTall }}" route="{{ true }}" car="{{ true }}" label="marisol approaching · 700 m" hint-size="100%,420px"></dc-import>
+<div style="flex:1;padding:20px 22px 18px;display:flex;flex-direction:column;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Assigned by dispatch · 9:29</div>
+<div style="margin-top:9px;display:flex;align-items:baseline;gap:11px">
+<span style="font:600 32px/1 'Source Serif 4',Georgia,serif">2 min</span>
+<span style="font:400 16px/1 'Source Serif 4',Georgia,serif;color:#605d5d">away · 700 m</span>
+</div>
+<div style="margin-top:16px;display:flex;align-items:center">
+<span style="width:13px;height:13px;border-radius:50%;background:#0088b0;flex:none"></span>
+<span style="flex:1;height:3px;background:#0088b0"></span>
+<span style="flex:1;height:3px;background:#d7d3d3"></span>
+<span style="width:11px;height:11px;border:3px solid #201e1d;border-radius:50%;flex:none"></span>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:7px;font:400 12px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979"><span>Car moving · turned onto Kingsway</span><span>You</span></div>
+<div style="margin-top:16px;display:flex;align-items:center;gap:13px;padding-bottom:15px;border-bottom:1px solid #d7d3d3">
+<div style="width:54px;height:54px;flex:none;background:#eae9e9;background-image:radial-gradient(#201e1d .8px,transparent .9px);background-size:4px 4px;border:1px solid #d7d3d3;display:flex;align-items:center;justify-content:center"><span style="font:400 9px/1.2 ui-monospace,Menlo,monospace;color:#605d5d;text-align:center">driver<br>photo</span></div>
+<div style="flex:1"><div style="font:600 18px/1.15 'Source Serif 4',Georgia,serif">Marisol A. · 4.94 ★</div><div style="font:400 14px/1.4 'Source Serif 4',Georgia,serif;color:#605d5d">Silver Toyota Corolla</div></div>
+<div style="font:600 16px/1 'Source Serif 4',Georgia,serif;letter-spacing:.06em;border:2px solid #201e1d;padding:5px 8px">KB 41 508</div>
+</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:10px"><i class="ph-duotone ph-check-circle" style="font-size:18px;color:#0088b0"></i><span style="font:400 14px/1.3 'Source Serif 4',Georgia,serif;color:#444141">9:28 · request sent to dispatch</span></div>
+<div style="display:flex;align-items:center;gap:10px"><i class="ph-duotone ph-check-circle" style="font-size:18px;color:#0088b0"></i><span style="font:400 14px/1.3 'Source Serif 4',Georgia,serif;color:#444141">9:29 · Ravi K. assigned Marisol</span></div>
+<div style="display:flex;align-items:center;gap:10px"><i class="ph-duotone ph-car" style="font-size:18px;color:#0088b0"></i><span style="font:400 14px/1.3 'Source Serif 4',Georgia,serif;color:#444141">Now · car moving toward you</span></div>
+</div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:14px">
+<div style="flex:1;height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-phone" style="font-size:18px"></i>Call</div>
+<div onClick="{{ goSafety }}" style="flex:none;width:48px;height:48px;border:1px solid #d6006c;display:flex;align-items:center;justify-content:center;border-radius:2px;cursor:pointer" style-hover="background:#fff1f4"><i class="ph-duotone ph-shield-check" style="font-size:20px;color:#d6006c"></i></div>
+<div onClick="{{ goEnroute }}" style="flex:1;height:48px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">Car has arrived</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEnroute }}" hint-placeholder-val="{{ false }}">
+<dc-import name="MapPlate" h="{{ mapH }}" route="{{ true }}" car="{{ true }}" label="marisol · 3 min away" hint-size="100%,300px"></dc-import>
+<div style="flex:1;padding:20px 22px 18px;display:flex;flex-direction:column;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:600 26px/1.1 'Source Serif 4',Georgia,serif">Arrives in 3 min</div>
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d">GO · $12.40</div>
+</div>
+<div style="margin-top:16px;display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid #d7d3d3">
+<div style="width:62px;height:62px;flex:none;background:#eae9e9;background-image:radial-gradient(#201e1d .8px,transparent .9px);background-size:4px 4px;display:flex;align-items:center;justify-content:center;border:1px solid #d7d3d3"><span style="font:400 9px/1.2 ui-monospace,Menlo,monospace;color:#605d5d;text-align:center">driver<br>photo</span></div>
+<div style="flex:1">
+<div style="font:600 19px/1.15 'Source Serif 4',Georgia,serif">Marisol A.</div>
+<div style="font:400 14px/1.4 'Source Serif 4',Georgia,serif;color:#605d5d">4.94 ★ · 2,180 rides</div>
+<div style="font:400 14px/1.4 'Source Serif 4',Georgia,serif;color:#605d5d">Silver Toyota Corolla</div>
+</div>
+<div style="text-align:right"><div style="font:600 17px/1 'Source Serif 4',Georgia,serif;letter-spacing:.06em;border:2px solid #201e1d;padding:5px 8px">KB 41 508</div></div>
+</div>
+<div style="margin-top:16px;display:flex;gap:10px">
+<div style="flex:1;height:50px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-phone" style="font-size:18px"></i>Call</div>
+<div style="flex:1;height:50px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-chat-teardrop-text" style="font-size:18px"></i>Message</div>
+<div onClick="{{ goSafety }}" style="flex:none;width:50px;height:50px;border:1px solid #d6006c;display:flex;align-items:center;justify-content:center;border-radius:2px;cursor:pointer" style-hover="background:#fff1f4"><i class="ph-duotone ph-shield-check" style="font-size:21px;color:#d6006c"></i></div>
+</div>
+<div style="margin-top:16px;font:400 15px/1.5 'Source Serif 4',Georgia,serif;color:#444141;border-left:3px solid #0088b0;padding-left:12px"><span style="font-style:italic">“Waiting by the newsstand on the corner.”</span><br><span style="font:400 12px/1.4 ui-monospace,Menlo,monospace;color:#7d7979">NOTE TO DRIVER</span></div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:14px">
+<div onClick="{{ goOptions }}" style="flex:none;padding:0 18px;height:48px;display:flex;align-items:center;justify-content:center;font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d;cursor:pointer" style-hover="color:#201e1d">Cancel</div>
+<div onClick="{{ goTrip }}" style="flex:1;height:48px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">I'm in the car</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTrip }}" hint-placeholder-val="{{ false }}">
+<dc-import name="MapPlate" h="{{ mapHTall }}" route="{{ true }}" car="{{ true }}" label="en route · 8 rowan st" hint-size="100%,420px"></dc-import>
+<div style="flex:1;padding:20px 22px 18px;display:flex;flex-direction:column;background:#f3f2f2;box-shadow:0 -12px 32px rgba(45,43,43,.14);position:relative">
+<div style="display:flex;align-items:baseline;gap:10px">
+<div style="font:600 34px/1 'Source Serif 4',Georgia,serif">9:41</div>
+<div style="font:400 16px/1 'Source Serif 4',Georgia,serif;color:#605d5d">arrival · 12 min left</div>
+</div>
+<div style="margin-top:14px;display:flex;align-items:center;gap:0">
+<span style="width:11px;height:11px;border:3px solid #201e1d;border-radius:50%;flex:none"></span>
+<span style="flex:1;height:3px;background:#0088b0"></span>
+<span style="width:15px;height:15px;border-radius:50%;background:#0088b0;flex:none"></span>
+<span style="flex:1;height:3px;background:#d7d3d3"></span>
+<span style="width:13px;height:13px;background:#d6006c;flex:none"></span>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:7px;font:400 12px/1.3 'Source Serif 4',Georgia,serif;color:#7d7979"><span>14 Kingsway</span><span>8 Rowan St</span></div>
+<div style="margin-top:18px;display:flex;flex-direction:column">
+<div onClick="{{ goSafety }}" style="display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-share-network" style="font-size:21px;color:#d6006c"></i><span style="flex:1;font:400 16px/1 'Source Serif 4',Georgia,serif">Share live trip</span><i class="ph-duotone ph-caret-right" style="font-size:16px;color:#7d7979"></i></div>
+<div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-map-pin-plus" style="font-size:21px;color:#0088b0"></i><span style="flex:1;font:400 16px/1 'Source Serif 4',Georgia,serif">Add a stop</span><i class="ph-duotone ph-caret-right" style="font-size:16px;color:#7d7979"></i></div>
+<div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-music-notes" style="font-size:21px;color:#0088b0"></i><span style="flex:1;font:400 16px/1 'Source Serif 4',Georgia,serif">Quiet ride requested</span><i class="ph-duotone ph-caret-right" style="font-size:16px;color:#7d7979"></i></div>
+</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:14px">
+<div><span style="display:block;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:#605d5d">Fare locked</span><span style="display:block;margin-top:5px;font:600 22px/1 'Source Serif 4',Georgia,serif">$12.40</span></div>
+<div onClick="{{ goArrival }}" style="padding:0 22px;height:48px;background:#0088b0;color:#fff;display:flex;align-items:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">Arrive</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSafety }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;position:relative;display:flex;flex-direction:column">
+<dc-import name="MapPlate" h="{{ 812 }}" route="{{ true }}" car="{{ true }}" label="safety toolkit" hint-size="100%,812px"></dc-import>
+<div style="position:absolute;inset:0;background:rgba(32,30,29,.42)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#f3f2f2;padding:22px;box-shadow:0 -12px 32px rgba(45,43,43,.22)">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:600 26px/1.1 'Source Serif 4',Georgia,serif">Safety toolkit</div>
+<div onClick="{{ goTrip }}" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-x" style="font-size:20px"></i></div>
+</div>
+<div style="margin-top:6px;font:400 15px/1.5 'Source Serif 4',Georgia,serif;color:#444141">Trip KB 41 508 · en route to 8 Rowan St</div>
+<div style="margin-top:16px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-share-network" style="font-size:24px;color:#d6006c"></i><span style="flex:1"><span style="display:block;font:600 17px/1.2 'Source Serif 4',Georgia,serif">Share live trip</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">Sends a live link to Ruth and Ade</span></span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-phone-call" style="font-size:24px;color:#d6006c"></i><span style="flex:1"><span style="display:block;font:600 17px/1.2 'Source Serif 4',Georgia,serif">Call emergency services</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">Shares your location and plate</span></span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-steering-wheel" style="font-size:24px;color:#0088b0"></i><span style="flex:1"><span style="display:block;font:600 17px/1.2 'Source Serif 4',Georgia,serif">Report driving</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">Speed, route, or conduct</span></span></div>
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-bell-ringing" style="font-size:24px;color:#0088b0"></i><span style="flex:1"><span style="display:block;font:600 17px/1.2 'Source Serif 4',Georgia,serif">Check on me at 9:45</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">We call if you don't respond</span></span></div>
+</div>
+<div onClick="{{ goTrip }}" style="margin-top:16px;height:50px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Back to trip</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isArrival }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;padding:30px 26px 22px;display:flex;flex-direction:column">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Trip complete · 9:41</div>
+<div style="height:3px;background:#201e1d;margin-top:10px"></div>
+<div style="height:1px;background:#201e1d;margin-top:3px"></div>
+<div style="margin-top:26px;font:600 31px/1.12 'Source Serif 4',Georgia,serif">You're at 8 Rowan&nbsp;St</div>
+<div style="margin-top:12px;font:400 16px/1.5 'Source Serif 4',Georgia,serif;color:#444141">12 min, 4.2 km with Marisol. Charged $12.40 to Visa · 4417 — exactly as quoted.</div>
+<div style="margin-top:28px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Rate the ride</div>
+<div style="margin-top:12px;display:flex;gap:10px">
+<div onClick="{{ rate1 }}" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d7d3d3;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-star" style="font-size:26px;color:{{ s1 }}"></i></div>
+<div onClick="{{ rate2 }}" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d7d3d3;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-star" style="font-size:26px;color:{{ s2 }}"></i></div>
+<div onClick="{{ rate3 }}" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d7d3d3;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-star" style="font-size:26px;color:{{ s3 }}"></i></div>
+<div onClick="{{ rate4 }}" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d7d3d3;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-star" style="font-size:26px;color:{{ s4 }}"></i></div>
+<div onClick="{{ rate5 }}" style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d7d3d3;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-star" style="font-size:26px;color:{{ s5 }}"></i></div>
+</div>
+<div style="margin-top:26px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Add a tip</div>
+<div style="margin-top:12px;display:flex;gap:10px">
+<div style="flex:1;height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">$1</div>
+<div style="flex:1;height:48px;background:#201e1d;color:#f3f2f2;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer">$2</div>
+<div style="flex:1;height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">$5</div>
+<div style="flex:1;height:48px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">None</div>
+</div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:16px">
+<div onClick="{{ goReceipt }}" style="flex:none;padding:0 18px;height:52px;display:flex;align-items:center;font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d;cursor:pointer" style-hover="color:#201e1d">Skip</div>
+<div onClick="{{ goReceipt }}" style="flex:1;height:52px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 17px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">Submit rating</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReceipt }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;padding:30px 26px 22px;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font:700 25px/1 'Source Serif 4',Georgia,serif;letter-spacing:.02em">DISPATCH</div>
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;color:#605d5d;letter-spacing:.08em">NO. 40 118 · 12 AUG</div>
+</div>
+<div style="height:3px;background:#201e1d;margin-top:10px"></div>
+<div style="height:1px;background:#201e1d;margin-top:3px"></div>
+<div style="margin-top:24px;font:600 28px/1.12 'Source Serif 4',Georgia,serif">Fare, itemised</div>
+<div style="margin-top:18px">
+<div style="display:flex;padding:11px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 16px/1.2 'Source Serif 4',Georgia,serif">Base fare</span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">$4.50</span></div>
+<div style="display:flex;padding:11px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 16px/1.2 'Source Serif 4',Georgia,serif">Distance · 4.2 km</span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">$5.04</span></div>
+<div style="display:flex;padding:11px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 16px/1.2 'Source Serif 4',Georgia,serif">Time · 12 min</span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">$2.16</span></div>
+<div style="display:flex;padding:11px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 16px/1.2 'Source Serif 4',Georgia,serif">City levy</span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">$0.70</span></div>
+<div style="display:flex;padding:11px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 16px/1.2 'Source Serif 4',Georgia,serif;font-style:italic">Tip to Marisol</span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">$2.00</span></div>
+<div style="display:flex;align-items:baseline;padding:15px 0;border-bottom:3px double #201e1d"><span style="flex:1;font:600 20px/1.1 'Source Serif 4',Georgia,serif">Total charged</span><span style="font:600 26px/1 'Source Serif 4',Georgia,serif">$14.40</span></div>
+</div>
+<div style="margin-top:18px;display:flex;align-items:center;gap:11px"><i class="ph-duotone ph-credit-card" style="font-size:22px;color:#0088b0"></i><span style="flex:1;font:400 15px/1.3 'Source Serif 4',Georgia,serif">Visa · 4417 — charged 9:42</span></div>
+<div style="margin-top:16px;padding:14px;background:#eae9e9;font:400 14px/1.5 'Source Serif 4',Georgia,serif;color:#444141;border-radius:2px">Quoted $12.40 before booking. Charged $12.40 plus your tip. Any difference is on us.</div>
+<div style="margin-top:auto;display:flex;gap:10px;padding-top:16px">
+<div style="flex:1;height:50px;border:1px solid #201e1d;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9"><i class="ph-duotone ph-download-simple" style="font-size:18px"></i>PDF</div>
+<div onClick="{{ goPickup }}" style="flex:1;height:50px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">Done</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isScheduled }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;padding:28px 26px 22px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px">
+<div onClick="{{ goPickup }}" style="width:38px;height:38px;margin-left:-8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:2px" style-hover="background:#eae9e9"><i class="ph-duotone ph-arrow-left" style="font-size:21px"></i></div>
+<div style="font:600 26px/1.1 'Source Serif 4',Georgia,serif">Scheduled</div>
+</div>
+<div style="margin-top:20px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Tomorrow</div>
+<div style="margin-top:10px;border:1px solid #d7d3d3;background:#eae9e9;border-radius:2px;padding:16px;box-shadow:0 1px 2px rgba(45,43,43,.14)">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 22px/1 'Source Serif 4',Georgia,serif">06:15</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#0088b0">XL · $31.00 FIXED</span></div>
+<div style="margin-top:10px;font:400 16px/1.45 'Source Serif 4',Georgia,serif">14 Kingsway → International, T2</div>
+<div style="margin-top:6px;font:400 14px/1.4 'Source Serif 4',Georgia,serif;color:#7d7979">Driver assigned 30 min before · free cancel until 05:45</div>
+<div style="margin-top:14px;display:flex;gap:10px"><span style="font:400 13px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#605d5d;cursor:pointer">EDIT</span><span style="font:400 13px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#aa0b56;cursor:pointer">CANCEL</span></div>
+</div>
+<div style="margin-top:22px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Every weekday</div>
+<div style="margin-top:8px">
+<div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-top:1px solid #d7d3d3"><i class="ph-duotone ph-repeat" style="font-size:22px;color:#0088b0"></i><span style="flex:1"><span style="display:block;font:400 16px/1.25 'Source Serif 4',Georgia,serif">08:20 · Studio commute</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">Mon–Fri · Go · ~$12.40</span></span><i class="ph-duotone ph-caret-right" style="font-size:16px;color:#7d7979"></i></div>
+<div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-top:1px solid #d7d3d3;border-bottom:1px solid #d7d3d3"><i class="ph-duotone ph-repeat" style="font-size:22px;color:#0088b0"></i><span style="flex:1"><span style="display:block;font:400 16px/1.25 'Source Serif 4',Georgia,serif">18:45 · Home</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#7d7979">Mon–Thu · Share · ~$8.20</span></span><i class="ph-duotone ph-caret-right" style="font-size:16px;color:#7d7979"></i></div>
+</div>
+<div style="margin-top:auto;padding-top:16px">
+<div onClick="{{ goOptions }}" style="height:52px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:2px;font:600 17px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac"><i class="ph-duotone ph-plus" style="font-size:18px"></i>Schedule a ride</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDriver }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column">
+<div style="padding:22px 24px 16px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Driver · Marisol A.</div>
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#0088b0">ONLINE</div>
+</div>
+<div style="margin-top:8px;display:flex;align-items:baseline;gap:12px"><span style="font:600 40px/1 'Source Serif 4',Georgia,serif">$184.20</span><span style="font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d">today · 11 trips</span></div>
+<div style="height:3px;background:#201e1d;margin-top:14px"></div>
+<div style="height:1px;background:#201e1d;margin-top:3px"></div>
+</div>
+<div style="padding:0 24px">
+<div style="border:2px solid #201e1d;background:#f3f2f2;padding:18px;box-shadow:0 12px 32px rgba(45,43,43,.22)">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#aa0b56">Assigned by dispatch · job 40 118</div>
+<div style="display:flex;align-items:center;gap:7px"><span style="width:11px;height:11px;border-radius:50%;background:#d6006c;animation:dsp-pulse 1.4s ease-out infinite"></span><span style="font:600 15px/1 ui-monospace,Menlo,monospace">2:00</span></div>
+</div>
+<div style="margin-top:12px;display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 30px/1 'Source Serif 4',Georgia,serif">$12.40</span><span style="font:400 15px/1 'Source Serif 4',Georgia,serif;color:#605d5d">Go · 12 min · 4.2 km</span></div>
+<div style="margin-top:8px;font:400 14px/1.4 'Source Serif 4',Georgia,serif;color:#605d5d">Desk: Ravi K. · confirm within 2 min or it returns to the queue</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:11px"><span style="width:11px;height:11px;border:3px solid #201e1d;border-radius:50%;flex:none"></span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">14 Kingsway · 3 min away</span></div>
+<div style="display:flex;align-items:center;gap:11px"><span style="width:11px;height:11px;background:#d6006c;flex:none"></span><span style="font:400 16px/1.2 'Source Serif 4',Georgia,serif">8 Rowan St</span></div>
+</div>
+<div style="margin-top:16px;display:flex;gap:10px">
+<div style="flex:none;padding:0 18px;height:52px;border:1px solid #201e1d;display:flex;align-items:center;border-radius:2px;font:400 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Can't take it</div>
+<div style="flex:1;height:52px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px;font:600 17px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac">Confirm &amp; navigate</div>
+</div>
+</div>
+</div>
+<div style="flex:1;position:relative;margin-top:18px">
+<dc-import name="MapPlate" h="{{ 300 }}" route="{{ true }}" car="{{ true }}" label="your position · kingsway ward" hint-size="100%,300px"></dc-import>
+</div>
+<div style="padding:16px 24px 20px">
+<div style="display:flex;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d;padding-bottom:7px;border-bottom:2px solid #201e1d"><span style="flex:1">Today</span><span style="width:70px;text-align:right">Trips</span><span style="width:84px;text-align:right">Earned</span></div>
+<div style="display:flex;padding:10px 0;border-bottom:1px solid #d7d3d3"><span style="flex:1;font:400 15px/1.2 'Source Serif 4',Georgia,serif">Morning peak</span><span style="width:70px;text-align:right;font:400 15px/1.2 'Source Serif 4',Georgia,serif">6</span><span style="width:84px;text-align:right;font:400 15px/1.2 'Source Serif 4',Georgia,serif">$104.80</span></div>
+<div style="display:flex;padding:10px 0"><span style="flex:1;font:400 15px/1.2 'Source Serif 4',Georgia,serif">Midday</span><span style="width:70px;text-align:right;font:400 15px/1.2 'Source Serif 4',Georgia,serif">5</span><span style="width:84px;text-align:right;font:400 15px/1.2 'Source Serif 4',Georgia,serif">$79.40</span></div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:412,&quot;height&quot;:812},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;signin&quot;,&quot;pickup&quot;,&quot;options&quot;,&quot;matching&quot;,&quot;deskQueue&quot;,&quot;deskAssign&quot;,&quot;driverAlert&quot;,&quot;approach&quot;,&quot;enroute&quot;,&quot;trip&quot;,&quot;safety&quot;,&quot;arrival&quot;,&quot;receipt&quot;,&quot;scheduled&quot;,&quot;driver&quot;],&quot;default&quot;:&quot;pickup&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tier&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Go&quot;,&quot;XL&quot;,&quot;Share&quot;],&quot;default&quot;:&quot;Go&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;stars&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:0,&quot;max&quot;:5,&quot;tsType&quot;:&quot;number&quot;},&quot;cardStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Bare list&quot;,&quot;Ruled ledger&quot;,&quot;Boxed cards&quot;],&quot;default&quot;:&quot;Bare list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sheetStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Paper sheet&quot;,&quot;Flat page&quot;],&quot;default&quot;:&quot;Paper sheet&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mapBalance&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Map-led&quot;,&quot;Balanced&quot;,&quot;Content-led&quot;],&quot;default&quot;:&quot;Balanced&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(s: string) =&gt; void&quot;},&quot;pick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t: string) =&gt; void&quot;},&quot;rate&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(n: number) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const nav = this.props.nav || (() => {});
+    const pick = this.props.pick || (() => {});
+    const rate = this.props.rate || (() => {});
+    const s = this.props.screen || "signin";
+    const tier = this.props.tier || "Go";
+    const style = this.props.cardStyle || "Bare list";
+    const balance = this.props.mapBalance || "Balanced";
+    const base = balance === "Map-led" ? 400 : balance === "Content-led" ? 210 : 300;
+    const stars = this.props.stars ?? 5;
+    const ink = (n) => (n <= stars ? "#0088b0" : "#bab6b6");
+    const sel = "#cbeeff";
+    const ring = (t) => (tier === t ? "2px solid #0088b0" : "0");
+    return {
+      isSignin: s === "signin", isPickup: s === "pickup", isOptions: s === "options",
+      isMatching: s === "matching", isEnroute: s === "enroute", isTrip: s === "trip",
+      isSafety: s === "safety", isArrival: s === "arrival", isReceipt: s === "receipt",
+      isScheduled: s === "scheduled", isDriver: s === "driver",
+      isDeskQueue: s === "deskQueue", isDeskAssign: s === "deskAssign",
+      isDriverAlert: s === "driverAlert", isApproach: s === "approach",
+      goDeskQueue: () => nav("deskQueue"), goDeskAssign: () => nav("deskAssign"),
+      goDriverAlert: () => nav("driverAlert"), goApproach: () => nav("approach"),
+      mapH: base, mapHShort: Math.round(base * 0.62), mapHTall: Math.round(base * 1.15),
+      sheetHandle: this.props.sheetStyle !== "Flat page",
+      cardBare: style === "Bare list", cardRuled: style === "Ruled ledger", cardBoxed: style === "Boxed cards",
+      bgGo: tier === "Go" ? sel : "transparent",
+      bgXL: tier === "XL" ? sel : "transparent",
+      bgShare: tier === "Share" ? sel : "transparent",
+      ringGo: ring("Go"), ringXL: ring("XL"), ringShare: ring("Share"),
+      tierLabel: tier, tierPrice: tier === "XL" ? "$18.90" : tier === "Share" ? "$8.20" : "$12.40",
+      s1: ink(1), s2: ink(2), s3: ink(3), s4: ink(4), s5: ink(5),
+      rate1: () => rate(1), rate2: () => rate(2), rate3: () => rate(3), rate4: () => rate(4), rate5: () => rate(5),
+      pickGo: () => pick("Go"), pickXL: () => pick("XL"), pickShare: () => pick("Share"),
+      goSignin: () => nav("signin"), goPickup: () => nav("pickup"), goOptions: () => nav("options"),
+      goMatching: () => nav("matching"), goEnroute: () => nav("enroute"), goTrip: () => nav("trip"),
+      goSafety: () => nav("safety"), goArrival: () => nav("arrival"), goReceipt: () => nav("receipt"),
+      goScheduled: () => nav("scheduled"), goDriver: () => nav("driver"),
+    };
+  }
+}
+</script>
+</body>
+</html>

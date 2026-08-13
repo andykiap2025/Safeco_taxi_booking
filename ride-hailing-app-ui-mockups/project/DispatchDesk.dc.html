@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/styles.css">
+<script src="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+</helmet>
+<div style="width:1040px;height:712px;background:#f3f2f2;color:#201e1d;font-family:'Source Serif 4',Georgia,serif;display:flex;flex-direction:column;padding:26px 30px 22px;box-sizing:border-box;overflow:hidden">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="display:flex;align-items:baseline;gap:14px"><span style="font:700 26px/1 'Source Serif 4',Georgia,serif;letter-spacing:.02em">DISPATCH DESK</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Kingsway ward · operator Ravi K.</span></div>
+<div style="display:flex;gap:26px;align-items:baseline">
+<span><span style="font:600 20px/1 'Source Serif 4',Georgia,serif">14</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d;margin-left:7px">CARS FREE</span></span>
+<span><span style="font:600 20px/1 'Source Serif 4',Georgia,serif;color:#aa0b56">3</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d;margin-left:7px">UNASSIGNED</span></span>
+<span><span style="font:600 20px/1 'Source Serif 4',Georgia,serif">42s</span><span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#605d5d;margin-left:7px">AVG ASSIGN</span></span>
+</div>
+</div>
+<div style="height:3px;background:#201e1d;margin-top:12px"></div>
+<div style="height:1px;background:#201e1d;margin-top:3px"></div>
+
+<div style="flex:1;display:flex;gap:34px;min-height:0;margin-top:20px">
+<div style="flex:1;display:flex;flex-direction:column;min-width:0">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Incoming requests</div>
+<div style="margin-top:12px;display:flex;font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d;padding-bottom:8px;border-bottom:2px solid #201e1d">
+<span style="width:62px">No.</span><span style="flex:1">Rider &amp; route</span><span style="width:64px">Class</span><span style="width:62px;text-align:right">Fare</span><span style="width:70px;text-align:right">Waited</span><span style="width:104px;text-align:right">Status</span>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+<div onClick="{{ r.on }}" style="display:flex;align-items:center;padding:13px 0;border-bottom:1px solid #d7d3d3;cursor:pointer;background:{{ r.bg }}" style-hover="background:#eae9e9">
+<span style="width:62px;font:600 14px/1 ui-monospace,Menlo,monospace">{{ r.no }}</span>
+<span style="flex:1;min-width:0"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">{{ r.rider }}</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">{{ r.route }}</span></span>
+<span style="width:64px;font:400 15px/1 'Source Serif 4',Georgia,serif">{{ r.tier }}</span>
+<span style="width:62px;text-align:right;font:600 16px/1 'Source Serif 4',Georgia,serif">{{ r.fare }}</span>
+<span style="width:70px;text-align:right;font:400 15px/1 'Source Serif 4',Georgia,serif;color:{{ r.waitInk }}">{{ r.waited }}</span>
+<span style="width:104px;text-align:right;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.07em;color:{{ r.statusInk }}">{{ r.status }}</span>
+</div>
+</sc-for>
+<div style="margin-top:auto;padding-top:16px;display:flex;gap:22px;align-items:baseline">
+<span style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:#605d5d">Shift 06:00–14:00</span>
+<span style="font:400 15px/1 'Source Serif 4',Georgia,serif;color:#444141">128 assigned today · 2 returned to queue</span>
+</div>
+</div>
+
+<div style="width:392px;flex:none;display:flex;flex-direction:column;min-height:0;overflow:hidden">
+<div style="font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Assign request {{ sel }}</div>
+<div style="margin-top:10px;font:600 22px/1.15 'Source Serif 4',Georgia,serif">14 Kingsway → 8 Rowan St</div>
+<div style="margin-top:5px;font:400 15px/1.45 'Source Serif 4',Georgia,serif;color:#605d5d">Go · $12.40 fixed · rider Amara O. · note: “waiting by the newsstand”</div>
+<dc-import name="MapPlate" h="{{ 188 }}" route="{{ true }}" car="{{ true }}" label="free cars in ward" hint-size="100%,188px"></dc-import>
+<div style="margin-top:16px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#605d5d">Nearest free drivers</div>
+<sc-for list="{{ drivers }}" as="d" hint-placeholder-count="3">
+<div onClick="{{ d.on }}" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #d7d3d3;cursor:pointer;background:{{ d.bg }}" style-hover="background:#eae9e9">
+<span style="width:11px;height:11px;border-radius:50%;background:{{ d.dot }};flex:none"></span>
+<span style="flex:1"><span style="display:block;font:600 16px/1.2 'Source Serif 4',Georgia,serif">{{ d.name }}</span><span style="display:block;font:400 13px/1.35 'Source Serif 4',Georgia,serif;color:#605d5d">{{ d.car }}</span></span>
+<span style="text-align:right"><span style="display:block;font:600 15px/1.2 'Source Serif 4',Georgia,serif">{{ d.eta }}</span><span style="display:block;font:400 12px/1.3 ui-monospace,Menlo,monospace;color:#7d7979">{{ d.rating }}</span></span>
+</div>
+</sc-for>
+<div style="margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:10px">
+<div style="font:400 14px/1.45 'Source Serif 4',Georgia,serif;color:#444141">{{ note }}</div>
+<div style="display:flex;gap:10px">
+<div style="flex:none;padding:0 16px;height:48px;border:1px solid #201e1d;display:flex;align-items:center;border-radius:2px;font:400 15px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#eae9e9">Hold</div>
+<div onClick="{{ assign }}" style="flex:1;height:48px;background:#0088b0;color:#fff;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:2px;font:600 16px/1 'Source Serif 4',Georgia,serif;cursor:pointer" style-hover="background:#1186ac" style-active="background:#006786"><i class="ph-duotone ph-paper-plane-tilt" style="font-size:18px"></i>{{ assignLabel }}</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1040,&quot;height&quot;:660}}">
+class Component extends DCLogic {
+  state = { sel: "40118", driver: "Marisol A.", sent: false };
+  renderVals() {
+    const sel = "#cbeeff";
+    const reqs = [
+      ["40118", "Amara O.", "14 Kingsway → 8 Rowan St", "Go", "$12.40", "0:22", "AT DESK"],
+      ["40119", "Tomas R.", "Ferry Terminal → 12 Alder Row", "XL", "$18.90", "0:48", "AT DESK"],
+      ["40120", "Lin H.", "Rowan St Market → 3 Quay St", "Share", "$8.20", "1:34", "WAITING"],
+      ["40117", "Beatriz S.", "51 Vane St → International T2", "XL", "$31.00", "—", "ASSIGNED"],
+      ["40116", "Kofi A.", "8 Rowan St → 14 Kingsway", "Go", "$12.40", "—", "EN ROUTE"],
+    ];
+    const drv = [
+      ["Marisol A.", "Silver Toyota Corolla · KB 41 508", "3 min", "4.94 ★", "#0088b0"],
+      ["Jonas P.", "White Hyundai i20 · KB 22 741", "6 min", "4.88 ★", "#0088b0"],
+      ["Ify N.", "Grey Suzuki Ciaz · KB 60 133", "9 min", "4.97 ★", "#7d7979"],
+    ];
+    return {
+      sel: this.state.sel,
+      note: this.state.sent
+        ? "Sent to " + this.state.driver + " — confirming. Rider sees “driver assigned”."
+        : "Rider is watching the desk step. Assign within 60s to hold the fare quote.",
+      assignLabel: this.state.sent ? "Sent · awaiting confirm" : "Assign " + this.state.driver,
+      assign: () => this.setState({ sent: true }),
+      rows: reqs.map(([no, rider, route, tier, fare, waited, status]) => ({
+        no, rider, route, tier, fare, waited, status,
+        on: () => this.setState({ sel: no, sent: false }),
+        bg: this.state.sel === no ? sel : "transparent",
+        waitInk: waited === "1:34" ? "#aa0b56" : "#605d5d",
+        statusInk: status === "WAITING" ? "#aa0b56" : status === "AT DESK" ? "#006786" : "#605d5d",
+      })),
+      drivers: drv.map(([name, car, eta, rating, dot]) => ({
+        name, car, eta, rating, dot,
+        on: () => this.setState({ driver: name, sent: false }),
+        bg: this.state.driver === name ? sel : "transparent",
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

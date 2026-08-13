@@ -1,0 +1,14 @@
+{
+  "name": "safeco-taxi-booking",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "driver": "npm run start --workspace driver",
+    "driver:android": "npm run android --workspace driver",
+    "driver:ios": "npm run ios --workspace driver"
+  }
+}

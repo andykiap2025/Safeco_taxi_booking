@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.expo/
+*.log
+.env
+.env.*
+!.env.example
+android/
+ios/
+
+# Build output — regenerable, and an 84 MB binary would bloat history permanently.
+# Ship builds via GitHub Releases or EAS rather than committing them.
+*.apk
+*.aab
+*.ipa
+web-build/
+expo-env.d.ts
+
+# OS cruft
+.DS_Store
+Thumbs.db

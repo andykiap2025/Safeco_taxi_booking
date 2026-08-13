@@ -1,0 +1,32 @@
+{
+    "expo":  {
+                 "name":  "Safeco Taxi Booking",
+                 "slug":  "safeco-customer",
+                 "version":  "1.0.0",
+                 "orientation":  "portrait",
+                 "icon":  "./assets/brand/logo-emblem.png",
+                 "userInterfaceStyle":  "dark",
+                 "splash":  {
+                                "image":  "./assets/brand/splash-screen.png",
+                                "resizeMode":  "contain",
+                                "backgroundColor":  "#0f0f1a"
+                            },
+                 "ios":  {
+                             "supportsTablet":  true
+                         },
+                 "android":  {
+                                 "adaptiveIcon":  {
+                                                      "backgroundColor":  "#ffffff",
+                                                      "foregroundImage":  "./assets/brand/logo-emblem.png"
+                                                  },
+                                 "predictiveBackGestureEnabled":  false,
+                                 "package":  "com.safeco.customer"
+                             },
+                 "web":  {
+                             "favicon":  "./assets/favicon.png"
+                         },
+                 "plugins":  [
+                                 "expo-font"
+                             ]
+             }
+}

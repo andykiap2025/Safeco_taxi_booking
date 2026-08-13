@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/styles.css">
+</helmet>
+<div style="position:relative;overflow:hidden;background:#f3f2f2;height:{{ h }}px;flex:none">
+<div style="position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,#d7d3d3 0 1px,transparent 1px 46px),repeating-linear-gradient(0deg,#d7d3d3 0 1px,transparent 1px 52px)"></div>
+<div style="position:absolute;inset:0;background-image:radial-gradient(#201e1d 0.6px,transparent 0.7px);background-size:4px 4px;opacity:.09"></div>
+<div style="position:absolute;left:-12%;top:28%;width:130%;height:9px;background:#eae9e9;border-top:1px solid #bab6b6;border-bottom:1px solid #bab6b6;transform:rotate(-9deg)"></div>
+<div style="position:absolute;left:22%;top:-10%;width:11px;height:130%;background:#eae9e9;border-left:1px solid #bab6b6;border-right:1px solid #bab6b6;transform:rotate(4deg)"></div>
+<div style="position:absolute;left:58%;top:52%;width:34%;height:30%;background:#eae9e9;outline:1px solid #d7d3d3"></div>
+<sc-if value="{{ route }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:78px;top:112px;width:3px;height:96px;background:#0088b0"></div>
+<div style="position:absolute;left:78px;top:205px;width:150px;height:3px;background:#0088b0"></div>
+<div style="position:absolute;left:225px;top:205px;width:3px;height:78px;background:#0088b0"></div>
+<div style="position:absolute;left:225px;top:280px;width:96px;height:3px;background:#0088b0"></div>
+<div style="position:absolute;left:70px;top:104px;width:19px;height:19px;border:3px solid #201e1d;border-radius:50%;background:#f3f2f2"></div>
+<div style="position:absolute;left:311px;top:271px;width:20px;height:20px;background:#d6006c"></div>
+</sc-if>
+<sc-if value="{{ car }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:210px;top:190px;width:34px;height:34px;border-radius:50%;background:#0088b0;box-shadow:0 3px 10px rgba(45,43,43,.16);display:flex;align-items:center;justify-content:center"><i class="ph-duotone ph-car" style="color:#fff;font-size:20px"></i></div>
+</sc-if>
+<div style="position:absolute;left:10px;top:10px;width:14px;height:14px"><div style="position:absolute;left:6px;top:0;width:1px;height:14px;background:#7d7979"></div><div style="position:absolute;top:6px;left:0;height:1px;width:14px;background:#7d7979"></div></div>
+<div style="position:absolute;right:10px;bottom:10px;width:14px;height:14px"><div style="position:absolute;left:6px;top:0;width:1px;height:14px;background:#7d7979"></div><div style="position:absolute;top:6px;left:0;height:1px;width:14px;background:#7d7979"></div></div>
+<div style="position:absolute;left:14px;bottom:12px;font:400 10px/1 ui-monospace,Menlo,monospace;color:#7d7979;letter-spacing:.08em;text-transform:uppercase">{{ label }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:412,&quot;height&quot;:320},&quot;h&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:300,&quot;tsType&quot;:&quot;number&quot;},&quot;route&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;car&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;map plate — halftone screen&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      h: this.props.h ?? 300,
+      route: this.props.route ?? true,
+      car: this.props.car ?? false,
+      label: this.props.label ?? "map plate — halftone screen",
+    };
+  }
+}
+</script>
+</body>
+</html>

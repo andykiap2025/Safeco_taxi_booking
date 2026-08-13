@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/styles.css">
+<script src="_ds/broadsheet-93c396a0-23ed-40ab-ac9e-d2ba14c024e0/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<style>
+body{margin:0;background:#f3f2f2;font-family:'Source Serif 4',Georgia,serif;color:#201e1d}
+a{color:#006786;text-decoration:none}a:hover{color:#0088b0}
+.dv-turn{padding:44px 48px 40px;scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#201e1d;color:#f3f2f2;border-radius:2px;text-decoration:none}
+.dv-tname{font:600 14px/1.2 'Source Serif 4',Georgia,serif}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:#eae9e9;color:#201e1d;border-radius:2px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:9px;font:400 12px/1.3 'Source Serif 4',Georgia,serif;color:#605d5d;max-width:428px}
+.dv-opt:target .dv-oid{background:#0088b0;color:#fff}
+.dv-next{margin:26px 0 0;font:400 13px/1.6 'Source Serif 4',Georgia,serif;color:#605d5d}
+.dv-cap{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:#7d7979}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">The dispatcher is mobile too — four handoffs on one phone size</span></div>
+<div style="max-width:60em;margin:0 0 22px;font:400 16px/1.6 'Source Serif 4',Georgia,serif;color:#444141;text-wrap:pretty">The desk console from <a class="dv-oid" href="#2c">2c</a> becomes an Android app, because the dispatcher works away from a desk: a queue he can clear one-handed, then an assign screen where he picks the driver <em>and</em> the car. Sending it fires the driver's alert with the customer's pickup pin, and the rider's screen switches from “at the desk” to a moving car with the assignment logged underneath. All four are in the turn-1 prototype rail — tap through <a href="#1a">1a</a> from <span style="font:400 11px ui-monospace,Menlo,monospace">MATCHING</span> onward to walk the whole handoff.</div>
+<div class="dv-opts">
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Dispatcher — queue. Waiting time in magenta once it passes a minute; running trips below.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="deskQueue" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Dispatcher — assign driver and car, with ETA to pickup and the rider's note in view.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="deskAssign" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Driver — the alert: who assigned it, the customer's pickup pin, and a countdown.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="driverAlert" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+<div class="dv-opt" id="3d">
+<div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Rider — the car moving toward them, with the dispatch decisions logged as a timeline.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="approach" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+</div>
+<p class="dv-next">Try next: “animate the car moving on <a class="dv-oid" href="#3d">3d</a>” · “add a dispatcher screen for reassigning a driver who drops out” · “show the driver's at-pickup screen”</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Dispatch-mediated flow — request → desk → driver assigned</span></div>
+<div style="max-width:60em;margin:0 0 22px;font:400 16px/1.6 'Source Serif 4',Georgia,serif;color:#444141;text-wrap:pretty">The rider no longer broadcasts to drivers: the request lands on a dispatch desk, an operator assigns the nearest free car, and the driver receives a job already allotted to them. So the rider's waiting screen now names the desk and its three states, the driver app confirms an assignment instead of bidding on a request, and the desk itself gets a console. Fare stays locked at quote through all three.</div>
+<div class="dv-opts">
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Rider — request at the desk. Named operator, three-step ledger, fare already locked.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="matching" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Driver — job allotted by the desk; confirm within two minutes or it returns to the queue.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="driver" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Dispatch desk console — pick a request, pick a car, send. Live: both lists are clickable.</div>
+<div style="border:1px solid #d7d3d3;box-shadow:0 12px 32px rgba(45,43,43,.22);background:#f3f2f2">
+<dc-import name="DispatchDesk" hint-size="1040px,712px"></dc-import>
+</div>
+</div>
+</div>
+<p class="dv-next">Try next: “add a desk view for cancellations and no-shows” · “let the desk chat with the rider” · “show the driver's pickup navigation screen”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div style="display:flex;gap:56px;flex-wrap:wrap;align-items:flex-start;margin-bottom:38px">
+<div style="max-width:620px">
+<div style="font:700 46px/1 'Source Serif 4',Georgia,serif;letter-spacing:.02em">DISPATCH</div>
+<div style="height:4px;background:#201e1d;margin-top:12px"></div>
+<div style="display:flex;justify-content:space-between;padding:7px 0" class="dv-cap"><span>Ride hailing · Android · mass-market city rides</span><span>Round 1 · 12 Aug 2026</span></div>
+<div style="height:1px;background:#201e1d"></div>
+<div style="margin-top:26px;font:600 27px/1.2 'Source Serif 4',Georgia,serif;max-width:22em;text-wrap:pretty">A ride app set like a newspaper: fares printed, not negotiated.</div>
+<div style="margin-top:16px;font:400 16px/1.6 'Source Serif 4',Georgia,serif;color:#444141;max-width:34em;text-wrap:pretty">Built on the Broadsheet system, so the whole product is Source Serif on paper — no sans chrome, no boxes for layout, cyan as the only interactive ink and magenta reserved for destination and safety. The map is treated as newsprint imagery: a halftone-screened plate with the route printed in cyan and the drop pin as a magenta square.</div>
+</div>
+<div style="max-width:400px;display:flex;flex-direction:column;gap:18px">
+<div>
+<div class="dv-cap">Assumptions I made</div>
+<div style="margin-top:9px;font:400 15px/1.55 'Source Serif 4',Georgia,serif;color:#444141">Upfront fixed fares are the product's spine (no surge), so price is stated on every screen and reconciled on the receipt. One city, one currency, card-on-file. Serif at interface sizes needs air — I kept the 1.25× spacing and 16px body minimum, and 48px+ tap targets throughout.</div>
+</div>
+<div>
+<div class="dv-cap">Where I'd want your call</div>
+<div style="margin-top:9px;font:400 15px/1.55 'Source Serif 4',Georgia,serif;color:#444141">Which ride-card treatment carries the tier list (<a class="dv-oid" href="#1b">1b</a>–<a class="dv-oid" href="#1d">1d</a>), and how much sheet the map should keep (<a class="dv-oid" href="#1e">1e</a>–<a class="dv-oid" href="#1f">1f</a>). Both are switchable as tweaks on this design.</div>
+</div>
+</div>
+</div>
+
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Tap-through prototype &amp; treatment options</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Live prototype — tap the screen to move through the flow; the rail below jumps anywhere.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="{{ screen }}" tier="{{ tier }}" stars="{{ stars }}" card-style="{{ cardStyle }}" sheet-style="{{ sheetStyle }}" map-balance="{{ mapBalance }}" nav="{{ nav }}" pick="{{ pick }}" rate="{{ rate }}" hint-size="100%,812px"></dc-import>
+</x-import>
+<div style="display:flex;flex-wrap:wrap;gap:6px;max-width:428px;margin-top:2px">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="11">
+<div onClick="{{ c.on }}" style="padding:6px 10px;border:1px solid #d7d3d3;border-radius:2px;font:400 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}" style-hover="border-color:#0088b0">{{ c.label }}</div>
+</sc-for>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Bare list — no rules, no boxes. Selection is a cyan tint. Most Broadsheet-native.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="options" tier="Go" card-style="Bare list" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Ruled ledger — a fare table with a column head. Scans fastest when prices differ.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="options" tier="XL" card-style="Ruled ledger" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Boxed cards — the system's one boxed component, used for genuinely discrete choices.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="options" tier="Share" card-style="Boxed cards" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Map-led — the plate takes half the sheet; the search sheet rides over it.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="pickup" map-balance="Map-led" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Content-led — the map shrinks to a printed strip; addresses and recents lead.</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="pickup" map-balance="Content-led" sheet-style="Flat page" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+
+</div>
+
+<div style="margin-top:44px">
+<div class="dv-thd"><span class="dv-tname">The full flow — eleven screens</span></div>
+<div class="dv-opts" style="gap:30px">
+<sc-for list="{{ wall }}" as="w" hint-placeholder-count="11">
+<div class="dv-opt">
+<div class="dv-olabel"><span class="dv-oid">{{ w.no }}</span>{{ w.label }}</div>
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" hint-size="428px,908px">
+<dc-import name="RideScreen" screen="{{ w.screen }}" tier="{{ w.tier }}" card-style="{{ cardStyle }}" map-balance="{{ mapBalance }}" hint-size="100%,812px"></dc-import>
+</x-import>
+</div>
+</sc-for>
+</div>
+</div>
+
+<p class="dv-next">Try next: “make <a class="dv-oid" href="#1c">1c</a> the tier list everywhere” · “add a fare-breakdown sheet before booking” · “new directions for the trip screen”</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cardStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Bare list&quot;,&quot;Ruled ledger&quot;,&quot;Boxed cards&quot;],&quot;default&quot;:&quot;Bare list&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Treatments&quot;},&quot;sheetStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Paper sheet&quot;,&quot;Flat page&quot;],&quot;default&quot;:&quot;Paper sheet&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Treatments&quot;},&quot;mapBalance&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Map-led&quot;,&quot;Balanced&quot;,&quot;Content-led&quot;],&quot;default&quot;:&quot;Balanced&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Treatments&quot;}}">
+class Component extends DCLogic {
+  state = { screen: "signin", tier: "Go", stars: 5 };
+  renderVals() {
+    const nav = (s) => this.setState({ screen: s });
+    const order = [
+      ["signin", "Sign-in — the front page"],
+      ["pickup", "Set pickup & destination"],
+      ["options", "Ride options, fares fixed"],
+      ["matching", "Request sent to dispatch"],
+      ["deskQueue", "Dispatcher — queue"],
+      ["deskAssign", "Dispatcher — assign driver & car"],
+      ["driverAlert", "Driver — assignment alert"],
+      ["approach", "Rider — car approaching"],
+      ["enroute", "Driver at pickup"],
+      ["trip", "Live trip"],
+      ["safety", "Safety toolkit"],
+      ["arrival", "Arrival & rating"],
+      ["receipt", "Itemised receipt"],
+      ["scheduled", "Scheduled rides"],
+      ["driver", "Driver side"],
+    ];
+    return {
+      screen: this.state.screen,
+      tier: this.state.tier,
+      stars: this.state.stars,
+      cardStyle: this.props.cardStyle ?? "Bare list",
+      sheetStyle: this.props.sheetStyle ?? "Paper sheet",
+      mapBalance: this.props.mapBalance ?? "Balanced",
+      nav,
+      pick: (t) => this.setState({ tier: t }),
+      rate: (n) => this.setState({ stars: n }),
+      chips: order.map(([id, label]) => ({
+        label: id,
+        on: () => nav(id),
+        bg: this.state.screen === id ? "#201e1d" : "transparent",
+        fg: this.state.screen === id ? "#f3f2f2" : "#605d5d",
+      })),
+      wall: order.map(([id, label], i) => ({
+        screen: id,
+        label,
+        tier: id === "options" ? "Go" : "Go",
+        no: String(i + 1).padStart(2, "0"),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>
