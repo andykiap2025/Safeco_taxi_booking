@@ -271,6 +271,16 @@ function applyJobChange(eventType: string, row: Record<string, any> | undefined)
       ? state.jobs.map((j) => (j.id === incoming.id ? incoming : j))
       : [incoming, ...state.jobs],
   });
+
+  // Assignment can make people visible who weren't before: RLS lets a rider
+  // read their driver and their dispatcher only once a job links them. That is
+  // a JOB change, so no profiles event fires — without this refetch, the app
+  // would show "the Office" instead of "Ravi K." until a restart (audit
+  // finding, 2026-08-14).
+  const unknownDispatcher = incoming.dispatcherId && state.dispatcher.id !== incoming.dispatcherId;
+  const unknownDriver =
+    incoming.assignedDriverId && !state.drivers.some((d) => d.id === incoming.assignedDriverId);
+  if (unknownDispatcher || unknownDriver) void hydrate();
 }
 
 /**

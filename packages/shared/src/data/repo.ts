@@ -258,6 +258,28 @@ export function cancelJob(jobId: string, actorId?: string) {
   });
 }
 
+/**
+ * Attach the rider's tip to an already-completed trip.
+ *
+ * Separate from completeTrip on purpose: the driver completes, and the rider's
+ * tip must not re-fire a 'completed' event (the audit found trips completing
+ * twice on the timeline) or touch the status at all. Still a client-side
+ * quoted_fare write — the same known hole as add-stop, closed by the future
+ * amend_fare() RPC.
+ */
+export async function addTip(job: JobRequest, tip: number, actorId?: string): Promise<JobRequest> {
+  const fare: FareBreakdown = {
+    ...job.quotedFare,
+    tip,
+    total: Math.round((job.quotedFare.total + tip) * 100) / 100,
+  };
+  return patchJob(job.id, { quoted_fare: fare }, 'Could not add your tip', {
+    name: 'tipped',
+    actorId,
+    detail: { tip },
+  });
+}
+
 export function completeTrip(jobId: string, quotedFare: FareBreakdown, actorId?: string) {
   return patchJob(
     jobId,

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  completeTrip,
+  addTip,
   currencySymbol,
   formatClock,
   formatDistance,
@@ -76,18 +76,13 @@ export function ArrivalScreen({ navigation, route }: ScreenProps<'Arrival'>) {
     setError(null);
     setSaving(true);
     try {
-      // The tip is added to the locked quote here rather than server-side,
-      // which is the same client-trust gap as the add-stop amendment — see
-      // the FARE INTEGRITY note in supabase/schema.sql.
-      const tip = withTip && withTip > 0 ? withTip : undefined;
-      const fare = tip
-        ? {
-            ...job.quotedFare,
-            tip,
-            total: Math.round((job.quotedFare.total + tip) * 100) / 100,
-          }
-        : job.quotedFare;
-      await completeTrip(jobId, fare);
+      // The DRIVER completed this trip — that is how the rider reached this
+      // screen. So there is nothing to write unless a tip was chosen, and a
+      // tip is its own event: re-firing completeTrip here double-logged
+      // "Trip complete" on the timeline (audit finding, 2026-08-14).
+      if (withTip && withTip > 0) {
+        await addTip(job, withTip, job.customerId);
+      }
       navigation.replace('Receipt', { jobId });
     } catch (e) {
       setError((e as Error).message);
