@@ -8,18 +8,23 @@
     ".": "./src/index.ts",
     "./components": "./src/components/index.ts",
     "./lumina": "./src/lumina/index.ts",
+    "./native": "./src/native/index.ts",
     "./ui": "./src/components/ui/index.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3"
   },
   "peerDependencies": {
+    "@react-native-async-storage/async-storage": "*",
     "expo-linear-gradient": "*",
     "react": "*",
     "react-native": "*",
     "react-native-svg": "*"
   },
   "peerDependenciesMeta": {
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    },
     "expo-linear-gradient": {
       "optional": true
     },
