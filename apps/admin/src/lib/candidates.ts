@@ -8,9 +8,16 @@ import type { AppState, DriverProfile, JobRequest, TierId, Vehicle } from '@safe
 export interface Candidate {
   driver: DriverProfile;
   vehicle: Vehicle;
-  etaMinutes: number; // PLACEHOLDER: 3 / 6 / 9 by index until live telemetry lands
   mismatch: boolean;
 }
+//
+// There is deliberately NO etaMinutes here. It used to be `(index % 3) * 3 + 3`
+// — the position in the list, rendered as "3 min" / "6 min" / "9 min" next to
+// each driver. A dispatcher picking the nearest car was reading list order.
+// Computing a real ETA needs driver positions, which requires the location
+// layer the apps do not have yet. Showing nothing is correct until then:
+// a fabricated distance is worse than an absent one when someone is choosing
+// who to send.
 
 // Every state in which a driver is already committed to a job. 'assigned' and
 // 'at_pickup' belong here: a driver waiting at a kerb for their rider to board
@@ -39,12 +46,7 @@ export function freeCandidates(state: AppState, job: JobRequest): Candidate[] {
     if (busyDrivers.has(driver.id) || busyVehicles.has(driver.vehicleId)) continue;
     const vehicle = state.vehicles.find((v) => v.id === driver.vehicleId);
     if (!vehicle) continue;
-    pairs.push({
-      driver,
-      vehicle,
-      etaMinutes: (pairs.length % 3) * 3 + 3,
-      mismatch: isMismatch(vehicle, job),
-    });
+    pairs.push({ driver, vehicle, mismatch: isMismatch(vehicle, job) });
   }
   return pairs;
 }

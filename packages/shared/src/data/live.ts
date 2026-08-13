@@ -14,7 +14,15 @@
 
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { getSupabase } from '../supabase';
-import { fetchJobs, fetchProfiles, fetchVehicles, toDispatcher, toDriver, toJob } from './repo';
+import {
+  fetchDeskToday,
+  fetchJobs,
+  fetchProfiles,
+  fetchVehicles,
+  toDispatcher,
+  toDriver,
+  toJob,
+} from './repo';
 import type { DispatcherProfile, DriverProfile, JobRequest, Vehicle } from '../types';
 
 export interface DeskStats {
@@ -35,6 +43,8 @@ export interface AppState {
   stats: DeskStats;
   /** Seconds each queued job has been waiting, derived from created_at. */
   waits: Record<string, number>;
+  /** Desk figures derived from today's job_events. */
+  deskToday: { returned: number; avgAssignSeconds: number };
   sync: { status: SyncStatus; error?: string };
 }
 
@@ -53,6 +63,8 @@ const EMPTY_STATS: DeskStats = {
 const QUEUED: JobRequest['status'][] = ['at_desk', 'waiting'];
 const ACTIVE: JobRequest['status'][] = ['offered', 'assigned', 'arriving', 'on_trip'];
 
+const EMPTY_DESK = { returned: 0, avgAssignSeconds: 0 };
+
 let state: AppState = {
   jobs: [],
   drivers: [],
@@ -60,6 +72,7 @@ let state: AppState = {
   dispatcher: OFFICE_FALLBACK,
   stats: EMPTY_STATS,
   waits: {},
+  deskToday: EMPTY_DESK,
   sync: { status: 'loading' },
 };
 
@@ -97,11 +110,12 @@ function commit(next: Partial<AppState>) {
     stats: {
       carsFree: merged.vehicles.filter((v) => !busyVehicles.has(v.id)).length,
       waiting: merged.jobs.filter((j) => QUEUED.includes(j.status)).length,
-      // avgAssignSeconds and returnedToday need the job_events timeline to be
-      // truthful; they stay 0 rather than showing an invented figure.
-      avgAssignSeconds: 0,
+      // Both figures now come from the job_events timeline, which is written on
+      // every transition. They were 0 while nothing recorded events — reported
+      // as zero rather than invented, and now they are real.
+      avgAssignSeconds: merged.deskToday.avgAssignSeconds,
       assignedToday: merged.jobs.filter((j) => today(j) && j.assignedDriverId).length,
-      returnedToday: 0,
+      returnedToday: merged.deskToday.returned,
     },
   };
   emit();
@@ -120,13 +134,102 @@ export function job(id: string): JobRequest | undefined {
   return state.jobs.find((j) => j.id === id);
 }
 
+export interface RecentPlace {
+  address: string;
+  route?: { distanceKm: number; durationMin: number };
+  lastUsedAt: string;
+}
+
+/**
+ * Destinations this customer has been to before, most recent first, one entry
+ * per address. Replaces a hardcoded list that showed the same three places to
+ * everyone, including a brand new account.
+ */
+export function recentDestinations(limit = 3): RecentPlace[] {
+  const seen = new Map<string, RecentPlace>();
+  for (const j of [...state.jobs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )) {
+    if (j.status === 'cancelled') continue;
+    const address = j.dropoff.address;
+    if (!address || seen.has(address)) continue;
+    seen.set(address, { address, route: j.route, lastUsedAt: j.createdAt });
+    if (seen.size >= limit) break;
+  }
+  return [...seen.values()];
+}
+
+export interface DayEarnings {
+  earned: number;
+  trips: number;
+  /** Completed trips grouped by part of day, newest part last. */
+  ledger: Array<{ period: string; trips: number; earned: number }>;
+}
+
+// Day parts used to break the ledger up. Boundaries are local hours.
+const DAY_PARTS: Array<{ period: string; from: number; to: number }> = [
+  { period: 'Morning peak', from: 5, to: 11 },
+  { period: 'Midday', from: 11, to: 16 },
+  { period: 'Evening', from: 16, to: 22 },
+  { period: 'Night', from: 22, to: 5 },
+];
+
+/**
+ * What this driver has actually earned today, from their own completed jobs.
+ * Replaces a hardcoded figure that was identical for every driver.
+ *
+ * Counts the locked total including any tip, because that is what the driver
+ * is owed. Commission is not modelled anywhere yet — when it is, it belongs
+ * here and NOT in the display layer.
+ */
+export function earningsToday(driverId: string | undefined): DayEarnings {
+  const empty: DayEarnings = { earned: 0, trips: 0, ledger: [] };
+  if (!driverId) return empty;
+
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const mine = state.jobs.filter(
+    (j) =>
+      j.assignedDriverId === driverId &&
+      j.status === 'completed' &&
+      new Date(j.updatedAt).getTime() >= start.getTime(),
+  );
+
+  const buckets = new Map<string, { trips: number; earned: number }>();
+  let earned = 0;
+  for (const j of mine) {
+    const total = j.quotedFare.total;
+    earned += total;
+    const hour = new Date(j.updatedAt).getHours();
+    const part =
+      DAY_PARTS.find((p) => (p.from < p.to ? hour >= p.from && hour < p.to : hour >= p.from || hour < p.to))
+        ?.period ?? 'Other';
+    const b = buckets.get(part) ?? { trips: 0, earned: 0 };
+    b.trips += 1;
+    b.earned += total;
+    buckets.set(part, b);
+  }
+
+  return {
+    earned: Math.round(earned * 100) / 100,
+    trips: mine.length,
+    ledger: DAY_PARTS.filter((p) => buckets.has(p.period)).map((p) => ({
+      period: p.period,
+      trips: buckets.get(p.period)!.trips,
+      earned: Math.round(buckets.get(p.period)!.earned * 100) / 100,
+    })),
+  };
+}
+
 /** Full reload of everything this user is allowed to see. */
 export async function hydrate(): Promise<void> {
   try {
-    const [jobs, profiles, vehicles] = await Promise.all([
+    const [jobs, profiles, vehicles, deskToday] = await Promise.all([
       fetchJobs(),
       fetchProfiles(),
       fetchVehicles(),
+      fetchDeskToday(),
     ]);
     // The DB holds driver<->vehicle on vehicles.driver_id, so the link is
     // attached here rather than read off the profile row.
@@ -140,6 +243,7 @@ export async function hydrate(): Promise<void> {
       drivers,
       vehicles,
       dispatcher: dispatcherRow ? toDispatcher(dispatcherRow) : OFFICE_FALLBACK,
+      deskToday,
       sync: { status: 'ready' },
     });
   } catch (e) {
@@ -205,6 +309,7 @@ export function stopLiveSync(): void {
     dispatcher: OFFICE_FALLBACK,
     stats: EMPTY_STATS,
     waits: {},
+    deskToday: EMPTY_DESK,
     sync: { status: 'loading' },
   };
   emit();

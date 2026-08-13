@@ -8,24 +8,11 @@
 
 import { useSyncExternalStore } from 'react';
 
-// ─── Day ledger ─────────────────────────────────────────────────────────────
-// PLACEHOLDER. Earnings history needs a query over completed jobs (or a
-// payouts table) before it means anything — these figures are from the design
-// export and are the same for every driver. Flagged in CLAUDE.md.
-
-export const DAY_BASE = { earnedToday: 184.2, tripsToday: 11 } as const;
-
-export interface LedgerRow {
-  period: string;
-  trips: number;
-  earned: number;
-}
-
-export const DAY_LEDGER: readonly LedgerRow[] = [
-  { period: 'Morning peak', trips: 6, earned: 104.8 },
-  { period: 'Midday', trips: 5, earned: 79.4 },
-] as const;
-
+// The day ledger used to live here as fixed figures (K184.20, 11 trips) that
+// every driver saw regardless of what they had actually done. It is now
+// derived from their own completed jobs — see earningsToday() in
+// @safeco/shared data/live.
+//
 // ─── Online toggle ──────────────────────────────────────────────────────────
 // Held locally as well as on the profile row so the switch responds instantly;
 // the write is fired alongside and the store's realtime update reconciles it.

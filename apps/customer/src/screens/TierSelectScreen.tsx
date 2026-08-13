@@ -55,8 +55,10 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
         tier: tierId,
         pickup: { address: '14 Kingsway' },
         dropoff: { address: '8 Rowan St' },
+        // Stored with the job so the receipt can itemise the same journey the
+        // fare was computed from.
+        route: ROUTE,
         quotedFare: quote,
-        noteToDriver: 'Waiting by the newsstand on the corner.',
       });
       navigation.navigate('OfficeAssigning', { jobId: job.id });
     } catch (e) {
@@ -112,16 +114,14 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
         })}
 
         {/* Payment — its own group (the tier cards above stay separate cards:
-            selection is carried by elevation, so they must not merge). */}
+            selection is carried by elevation, so they must not merge).
+            No card on file: there is no payment provider, so naming one would
+            be a promise the app cannot keep. */}
         <GlassGroup style={{ marginTop: spacing.xl }}>
           <GlassListItem
-            title="Visa · 4417"
+            title="Pay your driver directly"
+            subtitle="Card payment is coming"
             icon={currencySymbol()}
-            trailing={
-              <LuminaText token="overline" color={colors.onSurface.muted}>
-                Change
-              </LuminaText>
-            }
             last
           />
         </GlassGroup>

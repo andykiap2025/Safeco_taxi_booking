@@ -1,31 +1,24 @@
-// Scheduled rides — reviewing screen, no map (map balance rule). Lumina
-// Glass: tomorrow's ride is the elevated card with its badge; weekday
-// repeats are jewel rows; the CTA schedules a new one.
+// Scheduled rides — reviewing screen, no map (map balance rule).
+//
+// HONEST EMPTY STATE. This screen used to show a booked airport run for
+// "tomorrow 06:15" and two recurring weekday commutes, with Edit and Cancel
+// buttons wired to () => {}. None of it existed: there is no scheduled-rides
+// table, nothing was ever booked, and the buttons did nothing. A customer
+// could have arrived at a kerb at 06:15 expecting a car.
+//
+// Scheduling needs its own table plus a job that promotes a scheduled ride
+// into the queue at the right moment. Until that exists this screen says so,
+// and offers the thing that does work.
 
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { computeQuote, formatMoney } from '@safeco/shared';
-import { borders, colors, spacing, touchTarget } from '@safeco/shared/lumina';
-import {
-  GlassBadge,
-  GlassCard,
-  GlassGroup,
-  GlassListItem,
-  LuminaText,
-  NeuButton,
-  ScreenContainer,
-} from '@safeco/shared/ui';
-import { AIRPORT_ROUTE, ROUTE } from '../ui';
+import { Pressable } from 'react-native';
+import { colors, spacing, touchTarget } from '@safeco/shared/lumina';
+import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
 export function ScheduledScreen({ navigation }: ScreenProps<'Scheduled'>) {
   const insets = useSafeAreaInsets();
-  const goFare = formatMoney(computeQuote(ROUTE, 'go').total);
-  const shareFare = formatMoney(computeQuote(ROUTE, 'share').total);
-  // Was a hardcoded "$31.00" that never went through the fare engine, so it
-  // survived both the currency switch and every rate change. Quoted properly
-  // now, from the airport route.
-  const airportFare = formatMoney(computeQuote(AIRPORT_ROUTE, 'xl').total);
 
   return (
     <ScreenContainer
@@ -53,65 +46,31 @@ export function ScheduledScreen({ navigation }: ScreenProps<'Scheduled'>) {
         <LuminaText token="h2">Scheduled</LuminaText>
       </View>
 
-      <LuminaText token="overline" color={colors.text.muted} shadow="soft" style={{ marginTop: spacing.xl }}>
-        Tomorrow
-      </LuminaText>
-      <View style={{ marginTop: spacing.md }}>
-        <GlassCard variant="elevated" padding="lg">
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <LuminaText token="h2" style={{ flex: 1 }}>
-              06:15
-            </LuminaText>
-            <GlassBadge tone="primary">
-              {`XL · ${airportFare} FIXED`.toUpperCase()}
-            </GlassBadge>
-          </View>
+      <View style={{ marginTop: spacing['2xl'] }}>
+        <GlassCard>
+          <LuminaText token="overline" color={colors.onSurface.muted}>
+            Not available yet
+          </LuminaText>
           <LuminaText token="body" style={{ marginTop: spacing.sm }}>
-            14 Kingsway → International, T2
+            You can't book a ride for later yet. When it's ready, you'll be able to set a pickup
+            time and we'll have a car there — at a fare fixed when you book, same as always.
           </LuminaText>
-          <LuminaText token="caption" color={colors.onSurface.muted} style={{ marginTop: spacing.xs }}>
-            Driver assigned 30 min before · free cancel until 05:45
-          </LuminaText>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: spacing['2xl'],
-              marginTop: spacing.sm,
-              borderTopWidth: borders.hairline,
-              borderTopColor: colors.surface.separator,
-            }}
+          <LuminaText
+            token="bodySmall"
+            color={colors.onSurface.muted}
+            style={{ marginTop: spacing.md }}
           >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Edit"
-              style={{ minHeight: touchTarget, justifyContent: 'center' }}
-              onPress={() => {}}
-            >
-              <LuminaText token="caption" color={colors.onSurface.muted}>
-                EDIT
-              </LuminaText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-              style={{ minHeight: touchTarget, justifyContent: 'center' }}
-              onPress={() => {}}
-            >
-              <LuminaText token="caption" color={colors.accent.rose}>
-                CANCEL
-              </LuminaText>
-            </Pressable>
-          </View>
+            Riding now works as normal.
+          </LuminaText>
         </GlassCard>
       </View>
 
-      <GlassGroup title="Every weekday" style={{ marginTop: spacing['2xl'] }}>
-        <GlassListItem title="08:20 · Studio commute" subtitle={`Mon–Fri · Go · ${goFare}`} />
-        <GlassListItem title="18:45 · Home" subtitle={`Mon–Thu · Share · ${shareFare}`} last />
-      </GlassGroup>
-
       <View style={{ marginTop: 'auto' }}>
-        <NeuButton title="Schedule a ride" onPress={() => navigation.navigate('TierSelect')} />
+        <NeuButton
+          title="Book a ride now"
+          onPress={() => navigation.navigate('TierSelect')}
+          accessibilityLabel="Book a ride now"
+        />
       </View>
     </ScreenContainer>
   );

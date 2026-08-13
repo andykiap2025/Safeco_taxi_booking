@@ -6,17 +6,26 @@
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { fetchJobEvents, formatClock, type JobEvent } from '@safeco/shared';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
 import { MapPlate, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import { PlateChip, SafetyOverlay, SafetyShield } from '../ui';
 import type { ScreenProps } from '../navigation';
 
-const TIMELINE: Array<[string, string]> = [
-  ['9:28', 'Request sent'],
-  ['9:29', 'Ravi K. assigned Marisol'],
-  ['Now', 'Car moving'],
-];
+// What each recorded event says to the customer. Naming rules apply: they see
+// "the Office" or a dispatcher's real name, never the word "dispatch".
+const EVENT_COPY: Record<string, string> = {
+  created: 'Request sent',
+  offered: 'The Office found you a car',
+  confirmed: 'Driver confirmed and on the way',
+  returned: 'Car returned to the Office',
+  arrived: 'Driver arrived at pickup',
+  boarded: 'Trip started',
+  amended: 'Fare updated and confirmed',
+  completed: 'Trip complete',
+  cancelled: 'Ride cancelled',
+};
 
 // Map-dominant: the plate takes ~460dp; the sheet overlaps its lower edge.
 const MAP_HEIGHT = 460;
@@ -32,6 +41,26 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
   const driver = useAppState((s) => s.drivers.find((d) => d.id === job?.assignedDriverId));
   const vehicle = useAppState((s) => s.vehicles.find((v) => v.id === job?.assignedVehicleId));
   const dispatcherName = useAppState((s) => s.dispatcher.name);
+  const [timeline, setTimeline] = useState<JobEvent[]>([]);
+
+  // The real audit trail, replacing three hardcoded rows. Loaded when the
+  // sheet is expanded — it is detail behind a tap, so there is no reason to
+  // fetch it for every rider who never opens it.
+  useEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    void fetchJobEvents(jobId)
+      .then((events) => {
+        if (!cancelled) setTimeline(events);
+      })
+      .catch(() => {
+        // A missing timeline is not worth interrupting a live trip over; the
+        // section simply stays empty.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded, jobId, job?.status]);
 
   // The driver has pulled up — move the rider to the identification screen,
   // which is the one moment they check the plate before getting in.
@@ -49,7 +78,14 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
-      <MapPlate height={MAP_HEIGHT} route car label="marisol approaching · 700 m" />
+      {/* No distance-to-pickup: there is no location tracking, so "700 m" was
+          a decoration. The driver's name is real. */}
+      <MapPlate
+        height={MAP_HEIGHT}
+        route
+        car
+        label={driverName ? `${driverName.split(' ')[0].toLowerCase()} approaching` : 'car approaching'}
+      />
 
       {/* Bottom sheet — floating elevated glass, single line, expandable */}
       <View
@@ -78,7 +114,7 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
               color={colors.onSurface.muted}
               style={{ marginTop: spacing.sm }}
             >
-              2 min · Assigned by {dispatcherName} 9:29
+              Assigned by {dispatcherName} · {formatClock(job.updatedAt)}
             </LuminaText>
           </Pressable>
 
@@ -91,27 +127,37 @@ export function ApproachScreen({ navigation, route }: ScreenProps<'Approach'>) {
                 paddingTop: spacing.sm,
               }}
             >
-              {TIMELINE.map(([time, text]) => (
-                <View
-                  key={time}
-                  style={{ flexDirection: 'row', alignItems: 'center', minHeight: spacing['2xl'] }}
-                >
-                  {/* MonoText is context-blind — explicit ink on the light sheet. */}
-                  <MonoText size={12} color={colors.onSurface.secondary} style={{ width: TIME_COLUMN }}>
-                    {time}
-                  </MonoText>
-                  <LuminaText
-                    token="listTitle"
-                    color={colors.primary.base}
-                    style={{ width: spacing.lg + spacing.xs }}
+              {timeline.length === 0 ? (
+                <LuminaText token="bodySmall" color={colors.onSurface.muted}>
+                  No updates recorded yet.
+                </LuminaText>
+              ) : (
+                timeline.map((e) => (
+                  <View
+                    key={e.id}
+                    style={{ flexDirection: 'row', alignItems: 'center', minHeight: spacing['2xl'] }}
                   >
-                    ✓
-                  </LuminaText>
-                  <LuminaText token="bodySmall" color={colors.onSurface.secondary}>
-                    {text}
-                  </LuminaText>
-                </View>
-              ))}
+                    {/* MonoText is context-blind — explicit ink on the light sheet. */}
+                    <MonoText
+                      size={12}
+                      color={colors.onSurface.secondary}
+                      style={{ width: TIME_COLUMN }}
+                    >
+                      {formatClock(e.createdAt)}
+                    </MonoText>
+                    <LuminaText
+                      token="listTitle"
+                      color={colors.primary.base}
+                      style={{ width: spacing.lg + spacing.xs }}
+                    >
+                      ✓
+                    </LuminaText>
+                    <LuminaText token="bodySmall" color={colors.onSurface.secondary}>
+                      {EVENT_COPY[e.event] ?? e.event}
+                    </LuminaText>
+                  </View>
+                ))
+              )}
               <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
                 <NeuButton
                   variant="secondary"

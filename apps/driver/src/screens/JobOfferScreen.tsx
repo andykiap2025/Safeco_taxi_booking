@@ -9,6 +9,8 @@ import {
   DRIVER_CONFIRM_WINDOW_SECONDS,
   driverConfirm,
   driverReturn,
+  formatDistance,
+  formatDuration,
   formatMoney,
   tierById,
 } from '@safeco/shared';
@@ -156,7 +158,9 @@ export function JobOfferScreen({ navigation, route }: ScreenProps<'JobOffer'>) {
                 color={colors.onSurface.muted}
                 style={{ marginBottom: spacing.xs }}
               >
-                {tier.name} · 4.2 km · 12 min
+                {[tier.name, formatDistance(job.route), formatDuration(job.route)]
+                  .filter(Boolean)
+                  .join(' · ')}
               </LuminaText>
             </View>
 

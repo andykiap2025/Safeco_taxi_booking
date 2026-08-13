@@ -11,6 +11,7 @@ import {
   ADD_STOP_DISALLOWED_TIERS,
   amendedTotal,
   confirmAmendment,
+  formatDuration,
   formatMoney,
   type TierId,
 } from '@safeco/shared';
@@ -61,12 +62,23 @@ export function TripScreen({ navigation, route }: ScreenProps<'Trip'>) {
         }}
       >
         <GlassCard variant="elevated" borderRadius="xl">
+          {/* A live "12 min left" needs position tracking, which does not
+              exist. The quoted journey time is real, so it is shown as a
+              quote rather than a countdown that would never tick. */}
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
-            <LuminaText token="display">9:41</LuminaText>
-            <LuminaText token="body" color={colors.onSurface.secondary} style={{ flex: 1 }}>
-              arrival · 12 min left
+            <LuminaText token="display" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {job.dropoff.address}
             </LuminaText>
           </View>
+          {formatDuration(job.route) ? (
+            <LuminaText
+              token="body"
+              color={colors.onSurface.secondary}
+              style={{ marginTop: spacing.xs }}
+            >
+              {formatDuration(job.route)} journey as quoted
+            </LuminaText>
+          ) : null}
           <LuminaText
             token="overline"
             color={colors.onSurface.muted}

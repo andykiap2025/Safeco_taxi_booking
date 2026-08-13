@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { startTrip } from '@safeco/shared';
+import { formatClock, startTrip } from '@safeco/shared';
 import { borders, colors, radius, spacing } from '@safeco/shared/lumina';
 import { useAppState } from '@safeco/shared/components';
 import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
@@ -47,7 +47,7 @@ export function DriverArrivedScreen({ navigation, route }: ScreenProps<'DriverAr
       }}
     >
       <LuminaText token="caption" color={colors.text.muted} shadow="soft">
-        Arrived · 9:31 · 14 Kingsway
+        Arrived · {formatClock(job.updatedAt)} · {job.pickup.address}
       </LuminaText>
       <LuminaText token="h1" style={{ marginTop: spacing.sm }}>
         {firstName} is at the pickup

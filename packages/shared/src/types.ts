@@ -58,6 +58,10 @@ export interface JobRequest {
   dropoff: Place;
   stops?: Place[];
   noteToDriver?: string;
+  /** The route the quote was computed from. Stored, not re-derived: the
+   *  receipt itemises distance and time as charge lines, so they must be the
+   *  exact figures the fare was built from. */
+  route?: { distanceKm: number; durationMin: number };
   quotedFare: FareBreakdown; // locked at booking
   amendments?: FareAmendment[];
   status: JobStatus;
@@ -68,6 +72,19 @@ export interface JobRequest {
   upgradeApplied?: boolean; // upgrade-at-quote used; must be logged for cost review
   createdAt: string;
   updatedAt: string;
+}
+
+/** One entry in a job's audit timeline — surfaced to the customer as
+ *  "9:29 · Ravi K. assigned Marisol". Written on every state transition. */
+export interface JobEvent {
+  id: string;
+  jobId: string;
+  actorId?: string;
+  /** created | offered | confirmed | returned | arrived | boarded | completed
+   *  | cancelled | amended */
+  event: string;
+  detail?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface Vehicle {

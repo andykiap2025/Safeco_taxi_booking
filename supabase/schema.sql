@@ -17,6 +17,9 @@ do $$ begin
   );
 exception when duplicate_object then null; end $$;
 
+-- Added after the table first shipped, so existing projects need it too.
+alter table jobs add column if not exists route jsonb;
+
 -- Added after the enum first shipped, so existing projects need it too.
 -- 'at_pickup' separates "the driver has arrived" from "the rider has boarded".
 -- Without it the driver's arrival would jump the job straight to on_trip and
@@ -65,6 +68,10 @@ create table if not exists jobs (
   dropoff jsonb not null,
   stops jsonb not null default '[]',
   note_to_driver text,
+  -- { distanceKm, durationMin } as quoted. Stored because the receipt itemises
+  -- distance and time as CHARGE LINES — without this they were hardcoded
+  -- display strings that never matched the fare beside them.
+  route jsonb,
   party_size int, -- null → capacity proxy = requested tier's seat count
   quoted_fare jsonb not null, -- locked FareBreakdown
   amendments jsonb not null default '[]', -- confirmed add-stop amendments only

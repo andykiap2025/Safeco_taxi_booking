@@ -6,7 +6,14 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { completeTrip, currencySymbol, formatMoney } from '@safeco/shared';
+import {
+  completeTrip,
+  currencySymbol,
+  formatClock,
+  formatDistance,
+  formatDuration,
+  formatMoney,
+} from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
 import { useAppState } from '@safeco/shared/components';
 import {
@@ -87,13 +94,14 @@ export function ArrivalScreen({ navigation, route }: ScreenProps<'Arrival'>) {
       }}
     >
       <LuminaText token="caption" color={colors.text.muted} shadow="soft">
-        Trip complete · 9:41
+        Trip complete · {formatClock(job.updatedAt)}
       </LuminaText>
       <LuminaText token="h1" style={{ marginTop: spacing.sm }}>
-        You're at 8 Rowan St
+        You're at {job.dropoff.address}
       </LuminaText>
       <LuminaText token="body" color={colors.text.secondary} style={{ marginTop: spacing.md }}>
-        12 min, 4.2 km with {firstName}. Charged {formatMoney(job.quotedFare.total)} to Visa · 4417 —
+        {[formatDuration(job.route), formatDistance(job.route)].filter(Boolean).join(', ')}
+        {firstName ? ` with ${firstName}` : ''}. {formatMoney(job.quotedFare.total)} to pay —
         exactly as quoted.
       </LuminaText>
 

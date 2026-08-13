@@ -67,13 +67,17 @@ export function ToPickupScreen({ navigation, route }: ScreenProps<'ToPickup'>) {
           <LuminaText token="h3">
             {job.customerId} · {job.pickup.address}
           </LuminaText>
-          <LuminaText
-            token="overline"
-            color={colors.onSurface.muted}
-            style={{ marginTop: spacing.xs }}
-          >
-            3 min · note: by the newsstand
-          </LuminaText>
+          {/* No "3 min" — there is no position tracking to compute it from.
+              The rider's note is real when they leave one. */}
+          {job.noteToDriver ? (
+            <LuminaText
+              token="body"
+              color={colors.onSurface.secondary}
+              style={{ marginTop: spacing.xs, fontStyle: 'italic' }}
+            >
+              “{job.noteToDriver}”
+            </LuminaText>
+          ) : null}
           {job.status === 'at_pickup' ? (
             <LuminaText
               token="body"

@@ -63,3 +63,22 @@ export function currencySymbol(currency: string = FARE_RATES.currency): string {
 export function formatMoney(n: number, currency: string = FARE_RATES.currency): string {
   return `${currencySymbol(currency)}${n.toFixed(2)}`;
 }
+
+/** "4.2 km" / "12 min" for a stored route. Returns undefined when the job has
+ *  no route, so callers omit the line rather than invent a distance. */
+export function formatDistance(route?: RouteEstimate): string | undefined {
+  return route ? `${route.distanceKm.toFixed(1)} km` : undefined;
+}
+
+export function formatDuration(route?: RouteEstimate): string | undefined {
+  return route ? `${Math.round(route.durationMin)} min` : undefined;
+}
+
+/** Local clock time from an ISO timestamp: "9:41". Used for the audit
+ *  timeline and receipt lines, which previously hardcoded times. */
+export function formatClock(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}

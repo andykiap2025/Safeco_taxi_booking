@@ -1,17 +1,17 @@
 // Home — Lumina Glass: brand hero over the mesh gradient, earnings + ledger
 // on glass cards, a small map strip (no active movement yet), and the online
-// toggle. While online, the Office sends job 40 118 after a few seconds.
+// toggle. While online, a job arrives when the Office actually sends one.
 
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatMoney, setDriverOnline } from '@safeco/shared';
+import { earningsToday, formatMoney, setDriverOnline } from '@safeco/shared';
 import { useAuth } from '@safeco/shared/auth';
 import { borders, colors, radius, shadows, spacing, typography } from '@safeco/shared/lumina';
 import { BrandWordmark, MapPlate, MonoText, useAppState } from '@safeco/shared/components';
 import { GlassCard, InlineError, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
-import { DAY_BASE, DAY_LEDGER, setOnline, useOnline } from '../state';
+import { setOnline, useOnline } from '../state';
 
 const TRIPS_COL = 56;
 const EARNED_COL = 84;
@@ -29,6 +29,10 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
 
   // The signed-in driver, from the live roster rather than a hardcoded id.
   const driver = useAppState((s) => s.drivers.find((d) => d.id === profile?.id));
+
+  // Real earnings, from this driver's own completed jobs. Was a fixed figure
+  // that showed the same K184.20 to everyone, forever.
+  const day = useAppState(() => earningsToday(profile?.id));
 
   // A job the Office has actually sent to THIS driver and is awaiting confirm
   // on. RLS already limits jobs to ones assigned to them, but the id check
@@ -105,7 +109,7 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
               }}
             >
               <View>
-                <LuminaText token="display">{formatMoney(DAY_BASE.earnedToday)}</LuminaText>
+                <LuminaText token="display">{formatMoney(day.earned)}</LuminaText>
                 <LuminaText
                   token="caption"
                   color={colors.onSurface.muted}
@@ -115,7 +119,7 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
                 </LuminaText>
               </View>
               <LuminaText token="bodySmall" color={colors.onSurface.muted}>
-                {DAY_BASE.tripsToday} trips so far
+                {day.trips === 1 ? '1 trip so far' : `${day.trips} trips so far`}
               </LuminaText>
             </View>
 
@@ -154,14 +158,23 @@ export function HomeScreen({ navigation }: ScreenProps<'Home'>) {
                 marginTop: spacing.sm,
               }}
             />
-            {DAY_LEDGER.map((row, i) => (
+            {day.ledger.length === 0 ? (
+              <LuminaText
+                token="bodySmall"
+                color={colors.onSurface.muted}
+                style={{ paddingVertical: spacing.md }}
+              >
+                No completed trips yet today.
+              </LuminaText>
+            ) : null}
+            {day.ledger.map((row, i) => (
               <View
                 key={row.period}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingVertical: spacing.md,
-                  borderBottomWidth: i === DAY_LEDGER.length - 1 ? 0 : borders.hairline,
+                  borderBottomWidth: i === day.ledger.length - 1 ? 0 : borders.hairline,
                   borderBottomColor: colors.surface.separator,
                 }}
               >

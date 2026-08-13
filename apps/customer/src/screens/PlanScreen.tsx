@@ -6,8 +6,9 @@
 
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatDistance, formatDuration, recentDestinations } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
-import { MapPlate } from '@safeco/shared/components';
+import { MapPlate, useAppState } from '@safeco/shared/components';
 import {
   GlassCard,
   GlassGroup,
@@ -19,11 +20,9 @@ import {
 } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
 
-const RECENTS = [
-  { title: 'Studio · 8 Rowan St', subtitle: '4.2 km · 12 min' },
-  { title: 'Ferry Terminal', subtitle: '6.8 km · 19 min' },
-  { title: 'Rowan St Market', subtitle: '2.1 km · 7 min' },
-];
+// Recents come from the customer's own past trips (see recentDestinations).
+// This was a fixed list shown identically to everyone, including accounts that
+// had never taken a ride.
 
 // Origin ring / destination square geometry (visual glyphs, not tap targets).
 const ORIGIN_RING = 16;
@@ -34,6 +33,7 @@ const RECENT_SQUARE_ALPHA = 0.5;
 export function PlanScreen({ navigation }: ScreenProps<'Plan'>) {
   const insets = useSafeAreaInsets();
   const toTiers = () => navigation.navigate('TierSelect');
+  const recents = useAppState(() => recentDestinations());
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
@@ -103,27 +103,33 @@ export function PlanScreen({ navigation }: ScreenProps<'Plan'>) {
           </GlassCard>
         </View>
 
-        {/* Recents are one group, not three cards — same list, one container */}
-        <GlassGroup title="Recent" style={{ marginTop: spacing.xl }}>
-          {RECENTS.map((r, i) => (
-            <GlassListItem
-              key={r.title}
-              title={r.title}
-              subtitle={r.subtitle}
-              last={i === RECENTS.length - 1}
-              onPress={toTiers}
-              icon={
-                <View
-                  style={{
-                    width: RECENT_SQUARE,
-                    height: RECENT_SQUARE,
-                    backgroundColor: withOpacity(colors.accent.rose, RECENT_SQUARE_ALPHA),
-                  }}
-                />
-              }
-            />
-          ))}
-        </GlassGroup>
+        {/* Recents are one group, not three cards — same list, one container.
+            Hidden entirely for a customer with no history: an empty "Recent"
+            heading is worse than no heading. */}
+        {recents.length > 0 ? (
+          <GlassGroup title="Recent" style={{ marginTop: spacing.xl }}>
+            {recents.map((r, i) => (
+              <GlassListItem
+                key={r.address}
+                title={r.address}
+                subtitle={[formatDistance(r.route), formatDuration(r.route)]
+                  .filter(Boolean)
+                  .join(' · ')}
+                last={i === recents.length - 1}
+                onPress={toTiers}
+                icon={
+                  <View
+                    style={{
+                      width: RECENT_SQUARE,
+                      height: RECENT_SQUARE,
+                      backgroundColor: withOpacity(colors.accent.rose, RECENT_SQUARE_ALPHA),
+                    }}
+                  />
+                }
+              />
+            ))}
+          </GlassGroup>
+        ) : null}
 
         <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: 'auto', paddingTop: spacing.md }}>
           <NeuButton

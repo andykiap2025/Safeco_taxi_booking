@@ -114,7 +114,7 @@ interface CandidateRowProps {
 }
 
 function CandidateRow({ candidate, selected, disabled, flagged, last, onPress }: CandidateRowProps) {
-  const { driver, vehicle, etaMinutes } = candidate;
+  const { driver, vehicle } = candidate;
   const paddingH = useGroup()?.rowPaddingH ?? 0;
   return (
     <Pressable
@@ -173,7 +173,11 @@ function CandidateRow({ candidate, selected, disabled, flagged, last, onPress }:
             {vehicle.colour} {vehicle.make} {vehicle.model} · {vehicle.plate}
           </LuminaText>
         </View>
-        <MonoText color={colors.onSurface.secondary}>{etaMinutes} min</MonoText>
+        {/* Where the fake ETA used to sit. Rating is real, so it earns the
+            trailing slot instead. */}
+        <MonoText color={colors.onSurface.secondary}>
+          {driver.totalRides > 0 ? `${driver.totalRides} trips` : 'new'}
+        </MonoText>
       </SurfaceProvider>
       {last ? null : (
         <View

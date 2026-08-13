@@ -3,23 +3,25 @@
 
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatMoney } from '@safeco/shared';
+import { earningsToday, formatDistance, formatDuration, formatMoney } from '@safeco/shared';
+import { useAuth } from '@safeco/shared/auth';
 import { borders, colors, spacing } from '@safeco/shared/lumina';
 import { useAppState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer } from '@safeco/shared/ui';
 import type { ScreenProps } from '../navigation';
-import { DAY_BASE } from '../state';
 
 export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummary'>) {
   const { jobId } = route.params;
   const insets = useSafeAreaInsets();
+  const { profile } = useAuth();
   const job = useAppState((s) => s.jobs.find((j) => j.id === jobId));
+  const day = useAppState(() => earningsToday(profile?.id));
 
   if (!job) return <ScreenContainer />;
 
+  // Real totals from this driver's completed jobs — the trip just finished is
+  // already among them. Was a fixed baseline plus one.
   const earned = job.quotedFare.total;
-  const dayTotal = Math.round((DAY_BASE.earnedToday + earned) * 100) / 100;
-  const dayTrips = DAY_BASE.tripsToday + 1;
 
   return (
     <ScreenContainer
@@ -39,7 +41,9 @@ export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummar
       <View style={{ marginTop: spacing.lg }}>
         <GlassCard>
           <LuminaText token="body" color={colors.onSurface.secondary}>
-            12 min · 4.2 km · {job.customerId}
+            {[formatDuration(job.route), formatDistance(job.route), job.dropoff.address]
+              .filter(Boolean)
+              .join(' · ')}
           </LuminaText>
           <View
             style={{
@@ -52,7 +56,7 @@ export function TripSummaryScreen({ navigation, route }: ScreenProps<'TripSummar
             Day total
           </LuminaText>
           <LuminaText token="h2" style={{ marginTop: spacing.xs }}>
-            {formatMoney(dayTotal)} · {dayTrips} trips
+            {formatMoney(day.earned)} · {day.trips === 1 ? '1 trip' : `${day.trips} trips`}
           </LuminaText>
         </GlassCard>
       </View>
