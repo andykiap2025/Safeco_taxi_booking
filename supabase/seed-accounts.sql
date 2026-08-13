@@ -64,6 +64,27 @@ on conflict (id) do update
       name = excluded.name,
       ward = excluded.ward;
 
+-- ── Places (the service map) ────────────────────────────────────────────────
+--
+-- ⚠ SAMPLE DATA — VERIFY BEFORE USING FOR REAL BOOKINGS.
+--
+-- Real Port Moresby landmarks with APPROXIMATE coordinates, good enough to
+-- exercise booking end to end. Every fare is computed from these, so a
+-- coordinate that is off by a kilometre is a fare that is wrong by a kilometre.
+-- Check each against a map, and add the points you actually serve.
+--
+-- Riders can only book between places listed here, so this table is the
+-- service map: if it is empty, nobody can book anything.
+
+insert into places (name, address, ward, lat, lng) values
+  ('Jacksons International Airport', 'Airport Road, 7 Mile',    'Moresby North East', -9.4438, 147.2200),
+  ('Vision City',                    'Waigani Drive, Waigani',  'Moresby North West', -9.4200, 147.1870),
+  ('Boroko',                         'Okari Street, Boroko',    'Moresby North East', -9.4640, 147.1930),
+  ('Ela Beach',                      'Ela Beach Road, Town',    'Moresby South',      -9.4790, 147.1560),
+  ('Gerehu Stage 4',                 'Gerehu Drive, Gerehu',    'Moresby North West', -9.3830, 147.1560),
+  ('Port Moresby General Hospital',  'Taurama Road, Korobosea', 'Moresby South',      -9.4750, 147.2000)
+on conflict do nothing;
+
 -- ── Check ───────────────────────────────────────────────────────────────────
 select p.role, p.name, p.phone, v.plate, v.tier
 from profiles p

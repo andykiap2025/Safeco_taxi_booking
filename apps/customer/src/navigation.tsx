@@ -29,7 +29,9 @@ import { ScheduledScreen } from './screens/ScheduledScreen';
 
 export type RootStackParamList = {
   Plan: undefined;
-  TierSelect: undefined;
+  /** The journey chosen on Plan. Tier and fare are decided next, but the
+   *  route is fixed by this point — a quote needs both ends. */
+  TierSelect: { pickupId: string; dropoffId: string };
   OfficeAssigning: { jobId: string };
   Approach: { jobId: string };
   DriverArrived: { jobId: string };

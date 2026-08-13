@@ -17,13 +17,14 @@ import { getSupabase } from '../supabase';
 import {
   fetchDeskToday,
   fetchJobs,
+  fetchPlaces,
   fetchProfiles,
   fetchVehicles,
   toDispatcher,
   toDriver,
   toJob,
 } from './repo';
-import type { DispatcherProfile, DriverProfile, JobRequest, Vehicle } from '../types';
+import type { DispatcherProfile, DriverProfile, JobRequest, SavedPlace, Vehicle } from '../types';
 
 export interface DeskStats {
   carsFree: number;
@@ -39,6 +40,8 @@ export interface AppState {
   jobs: JobRequest[];
   drivers: DriverProfile[];
   vehicles: Vehicle[];
+  /** Pickup and drop-off points the Office serves. */
+  places: SavedPlace[];
   dispatcher: DispatcherProfile;
   stats: DeskStats;
   /** Seconds each queued job has been waiting, derived from created_at. */
@@ -69,6 +72,7 @@ let state: AppState = {
   jobs: [],
   drivers: [],
   vehicles: [],
+  places: [],
   dispatcher: OFFICE_FALLBACK,
   stats: EMPTY_STATS,
   waits: {},
@@ -225,10 +229,11 @@ export function earningsToday(driverId: string | undefined): DayEarnings {
 /** Full reload of everything this user is allowed to see. */
 export async function hydrate(): Promise<void> {
   try {
-    const [jobs, profiles, vehicles, deskToday] = await Promise.all([
+    const [jobs, profiles, vehicles, places, deskToday] = await Promise.all([
       fetchJobs(),
       fetchProfiles(),
       fetchVehicles(),
+      fetchPlaces(),
       fetchDeskToday(),
     ]);
     // The DB holds driver<->vehicle on vehicles.driver_id, so the link is
@@ -242,6 +247,7 @@ export async function hydrate(): Promise<void> {
       jobs,
       drivers,
       vehicles,
+      places,
       dispatcher: dispatcherRow ? toDispatcher(dispatcherRow) : OFFICE_FALLBACK,
       deskToday,
       sync: { status: 'ready' },
@@ -306,6 +312,7 @@ export function stopLiveSync(): void {
     jobs: [],
     drivers: [],
     vehicles: [],
+    places: [],
     dispatcher: OFFICE_FALLBACK,
     stats: EMPTY_STATS,
     waits: {},

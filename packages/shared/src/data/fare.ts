@@ -2,7 +2,7 @@
 // booking it is locked and changes ONLY via a confirmed add-stop amendment
 // (CLAUDE.md "Fare amendments").
 
-import { FARE_RATES, TIERS } from '../constants';
+import { FARE_RATES, ROUTE_ESTIMATE, TIERS } from '../constants';
 import type { FareBreakdown, TierId } from '../types';
 
 export interface RouteEstimate {
@@ -13,6 +13,59 @@ export interface RouteEstimate {
 function roundStep(n: number): number {
   const s = FARE_RATES.roundStep;
   return Math.round((Math.round(n / s) * s) * 100) / 100;
+}
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+const EARTH_RADIUS_KM = 6371;
+const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+/** Great-circle distance in km. */
+function haversineKm(a: Coordinates, b: Coordinates): number {
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Estimate the road route between two known places.
+ *
+ * This is an ESTIMATE, not a routed path: straight-line distance scaled by
+ * ROUTE_ESTIMATE.roadFactor, with duration from an average speed. It exists so
+ * fares can be quoted without a routing API (see the `places` table in
+ * supabase/schema.sql).
+ *
+ * It will be wrong where geography intervenes — a river, a bay, a one-way
+ * system — and it under-reads on those routes specifically. Tune roadFactor
+ * against real trips, and if a particular pair is persistently mis-quoted the
+ * answer is a measured override for that pair, not a global change that moves
+ * every other fare with it.
+ *
+ * Returns undefined when either place has no coordinates, so the caller shows
+ * "fare unavailable" rather than quoting from a guess.
+ */
+export function estimateRoute(
+  from: Coordinates | undefined,
+  to: Coordinates | undefined,
+): RouteEstimate | undefined {
+  if (!from || !to) return undefined;
+  const straight = haversineKm(from, to);
+  const distanceKm = Math.max(
+    ROUTE_ESTIMATE.minimumDistanceKm,
+    straight * ROUTE_ESTIMATE.roadFactor,
+  );
+  const durationMin = (distanceKm / ROUTE_ESTIMATE.averageSpeedKmh) * 60;
+  return {
+    distanceKm: Math.round(distanceKm * 10) / 10,
+    durationMin: Math.max(1, Math.round(durationMin)),
+  };
 }
 
 export function tierById(id: TierId) {

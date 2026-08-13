@@ -4,9 +4,14 @@
 // safety/alert voice — no teal inside a safety surface.
 
 import { useState } from 'react';
-import { Linking, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Linking, Pressable, ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { EMERGENCY_NUMBER, logJobEvent, type RouteEstimate } from '@safeco/shared';
+import {
+  EMERGENCY_NUMBER,
+  logJobEvent,
+  type RouteEstimate,
+  type SavedPlace,
+} from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
 import { GlassModal, LuminaText, withOpacity } from '@safeco/shared/ui';
 
@@ -75,6 +80,76 @@ export function PlateChip({ plate, style }: { plate: string; style?: StyleProp<V
     </View>
   );
 }
+
+// ─── Place picker ───────────────────────────────────────────────────────────
+// Riders choose from the points the Office serves rather than typing a free
+// address, because a fixed fare needs a known distance and there is no
+// geocoding. See the `places` table in supabase/schema.sql.
+
+export function PlacePicker({
+  visible,
+  title,
+  places,
+  excludeId,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  places: SavedPlace[];
+  /** The other end of the journey — you cannot travel to where you already are. */
+  excludeId?: string;
+  onSelect: (place: SavedPlace) => void;
+  onClose: () => void;
+}) {
+  const options = places.filter((p) => p.id !== excludeId);
+  return (
+    <GlassModal visible={visible} onClose={onClose}>
+      <LuminaText token="overline" color={colors.onSurface.muted}>
+        {title}
+      </LuminaText>
+      {options.length === 0 ? (
+        <LuminaText token="body" color={colors.onSurface.secondary} style={{ marginTop: spacing.md }}>
+          The Office hasn't added any pickup points yet. There's nowhere to book to until it does.
+        </LuminaText>
+      ) : (
+        <ScrollView style={{ maxHeight: PICKER_MAX_HEIGHT, marginTop: spacing.sm }}>
+          {options.map((p, i) => (
+            <Pressable
+              key={p.id}
+              accessibilityRole="button"
+              accessibilityLabel={p.name}
+              onPress={() => {
+                onSelect(p);
+                onClose();
+              }}
+              style={{
+                minHeight: touchTarget,
+                justifyContent: 'center',
+                paddingVertical: spacing.sm,
+                borderBottomWidth: i === options.length - 1 ? 0 : borders.hairline,
+                borderBottomColor: colors.surface.separator,
+              }}
+            >
+              <LuminaText token="listTitle">{p.name}</LuminaText>
+              <LuminaText token="listSubtitle" color={colors.onSurface.muted}>
+                {[p.address, p.ward].filter(Boolean).join(' · ')}
+              </LuminaText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+      <GhostButton
+        title="Close"
+        color={colors.onSurface.muted}
+        onPress={onClose}
+        style={{ marginTop: spacing.sm }}
+      />
+    </GlassModal>
+  );
+}
+
+const PICKER_MAX_HEIGHT = 320;
 
 // ─── Glyphs ─────────────────────────────────────────────────────────────────
 

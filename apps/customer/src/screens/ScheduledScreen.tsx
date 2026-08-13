@@ -66,9 +66,11 @@ export function ScheduledScreen({ navigation }: ScreenProps<'Scheduled'>) {
       </View>
 
       <View style={{ marginTop: 'auto' }}>
+        {/* Goes to Plan, not straight to tiers: a fare needs a journey, and
+            the journey is chosen there. */}
         <NeuButton
           title="Book a ride now"
-          onPress={() => navigation.navigate('TierSelect')}
+          onPress={() => navigation.navigate('Plan')}
           accessibilityLabel="Book a ride now"
         />
       </View>

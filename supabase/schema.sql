@@ -59,6 +59,27 @@ create table if not exists vehicles (
   created_at timestamptz not null default now()
 );
 
+-- Known pickup and drop-off points the Office serves.
+--
+-- Chosen over address geocoding (2026-08-14): no external API, no per-lookup
+-- cost, works offline, and it fits fixed-fare pricing between known points —
+-- which is how an operator this size actually quotes. Distance is estimated
+-- from the coordinates (see estimateRoute in data/fare.ts); the operator tunes
+-- the road factor rather than paying for a routing service.
+create table if not exists places (
+  id uuid primary key default gen_random_uuid(),
+  name text not null, -- what riders see: "Vision City"
+  address text not null,
+  ward text,
+  lat double precision,
+  lng double precision,
+  -- Retire a place without deleting it, so historical jobs keep their address.
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists places_active_idx on places (active, name);
+
 create table if not exists jobs (
   id uuid primary key default gen_random_uuid(),
   number bigint generated always as identity (start with 40121),
@@ -220,11 +241,24 @@ grant execute on function public.can_see_job(uuid) to authenticated;
 -- RLS on everywhere, then explicit policies per table. Anything not granted
 -- below is denied: there is no permissive fallback.
 
+alter table places enable row level security;
 alter table profiles enable row level security;
 alter table vehicles enable row level security;
 alter table jobs enable row level security;
 alter table job_events enable row level security;
 alter table upgrade_log enable row level security;
+
+-- places .....................................................................
+-- The service map is not secret: any signed-in user needs it to book. Only the
+-- Office may change it.
+
+drop policy if exists "places readable" on places;
+create policy "places readable" on places for select to authenticated using (true);
+
+drop policy if exists "dispatcher manages places" on places;
+create policy "dispatcher manages places" on places for all to authenticated
+  using (public.is_dispatcher())
+  with check (public.is_dispatcher());
 
 -- profiles ...................................................................
 

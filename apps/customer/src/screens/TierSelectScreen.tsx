@@ -11,12 +11,14 @@ import {
   computeQuote,
   createJob,
   currencySymbol,
+  estimateRoute,
   formatMoney,
   tierById,
   TIERS,
   type TierId,
 } from '@safeco/shared';
 import { useAuth } from '@safeco/shared/auth';
+import { useAppState } from '@safeco/shared/components';
 import { colors, spacing } from '@safeco/shared/lumina';
 import { MapPlate } from '@safeco/shared/components';
 import {
@@ -33,17 +35,25 @@ import type { ScreenProps } from '../navigation';
 
 const SORTED_TIERS = [...TIERS].sort((a, b) => a.sortOrder - b.sortOrder);
 
-export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
+export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'>) {
+  const { pickupId, dropoffId } = route.params;
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const [tierId, setTierId] = useState<TierId>('go');
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const quote = computeQuote(ROUTE, tierId);
+
+  const pickup = useAppState((s) => s.places.find((p) => p.id === pickupId));
+  const dropoff = useAppState((s) => s.places.find((p) => p.id === dropoffId));
+
+  // The journey being priced. Undefined when either end lacks coordinates —
+  // then no fare is shown at all, rather than one built on a guessed distance.
+  const journey = estimateRoute(pickup?.location, dropoff?.location);
+  const quote = journey ? computeQuote(journey, tierId) : undefined;
   const tier = tierById(tierId);
 
   const book = async () => {
-    if (!profile) return;
+    if (!profile || !quote || !journey || !pickup || !dropoff) return;
     setError(null);
     setBooking(true);
     try {
@@ -53,11 +63,11 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
       const job = await createJob({
         customerId: profile.id,
         tier: tierId,
-        pickup: { address: '14 Kingsway' },
-        dropoff: { address: '8 Rowan St' },
+        pickup: { address: pickup.name, location: pickup.location },
+        dropoff: { address: dropoff.name, location: dropoff.location },
         // Stored with the job so the receipt can itemise the same journey the
         // fare was computed from.
-        route: ROUTE,
+        route: journey,
         quotedFare: quote,
       });
       navigation.navigate('OfficeAssigning', { jobId: job.id });
@@ -70,7 +80,10 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
 
   return (
     <ScreenContainer style={{ paddingTop: insets.top }}>
-      <MapPlate height={120} label="14 kingsway → 8 rowan st" />
+      <MapPlate
+        height={120}
+        label={`${(pickup?.name ?? '').toLowerCase()} → ${(dropoff?.name ?? '').toLowerCase()}`}
+      />
 
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: spacing.xl }}>
@@ -82,8 +95,16 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
           </LuminaText>
         </View>
 
+        {!journey ? (
+          <InlineError
+            title="No fare for this journey"
+            message="We don't have map coordinates for one of these places, so we can't quote a fixed fare. Ask the Office to add them."
+            style={{ marginTop: spacing.lg }}
+          />
+        ) : null}
+
         {SORTED_TIERS.map((t) => {
-          const q = computeQuote(ROUTE, t.id);
+          const q = journey ? computeQuote(journey, t.id) : undefined;
           const selected = t.id === tierId;
           return (
             <View key={t.id} style={{ marginTop: spacing.md }}>
@@ -91,14 +112,14 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
                 variant={selected ? 'elevated' : 'default'}
                 padding="lg"
                 onPress={() => setTierId(t.id)}
-                accessibilityLabel={`${t.name} · ${formatMoney(q.total)}`}
+                accessibilityLabel={q ? `${t.name} · ${formatMoney(q.total)}` : t.name}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm }}>
                   <LuminaText token="h3">{t.name}</LuminaText>
                   <LuminaText token="overline" color={colors.onSurface.muted} style={{ flex: 1 }}>
                     {t.seats} seats
                   </LuminaText>
-                  <LuminaText token="h3">{formatMoney(q.total)}</LuminaText>
+                  <LuminaText token="h3">{q ? formatMoney(q.total) : '—'}</LuminaText>
                 </View>
                 <LuminaText
                   token="bodySmall"
@@ -136,11 +157,13 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
 
         <View style={{ marginTop: 'auto', paddingTop: spacing.md }}>
           <NeuButton
-            title={`Book ${tier.name} · ${formatMoney(quote.total)}`}
+            title={quote ? `Book ${tier.name} · ${formatMoney(quote.total)}` : 'Fare unavailable'}
             onPress={book}
             loading={booking}
-            disabled={booking || !profile}
-            accessibilityLabel={`Book ${tier.name} for ${formatMoney(quote.total)}`}
+            disabled={booking || !profile || !quote}
+            accessibilityLabel={
+              quote ? `Book ${tier.name} for ${formatMoney(quote.total)}` : 'Fare unavailable'
+            }
           />
         </View>
       </View>

@@ -35,6 +35,24 @@ export const FARE_RATES = {
   currency: 'PGK',
 } as const;
 
+// Route estimation between known places (no routing API — see the `places`
+// table in supabase/schema.sql for why).
+//
+// Straight-line distance under-reads real driving distance, so it is scaled by
+// a road factor. 1.35 is a common starting figure for a road network with
+// ordinary detours; TUNE IT against real trips before launch, because it moves
+// every fare. Duration follows from an average speed, which should reflect
+// actual traffic rather than a speed limit.
+//
+// These two numbers set every quote. They are estimates and the fare lock
+// binds Safeco to them, so erring slightly high protects the operator.
+export const ROUTE_ESTIMATE = {
+  roadFactor: 1.35,
+  averageSpeedKmh: 26,
+  // Nothing is quoted below this: very short hops still occupy a car.
+  minimumDistanceKm: 0.8,
+} as const;
+
 // Job offers return to the queue if the driver doesn't confirm in time.
 export const DRIVER_CONFIRM_WINDOW_SECONDS = 120;
 

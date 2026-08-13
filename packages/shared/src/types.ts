@@ -29,6 +29,15 @@ export interface Place {
   location?: LatLng;
 }
 
+/** A pickup/drop-off point the Office serves, chosen by riders at booking. */
+export interface SavedPlace {
+  id: string;
+  name: string;
+  address: string;
+  ward?: string;
+  location?: LatLng;
+}
+
 // A locked quote. Every charge must trace to one of these that the customer
 // saw and accepted.
 export interface FareBreakdown {

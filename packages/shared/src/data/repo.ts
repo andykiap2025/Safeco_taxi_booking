@@ -16,6 +16,7 @@ import type {
   JobRequest,
   JobStatus,
   Place,
+  SavedPlace,
   TierId,
   Vehicle,
 } from '../types';
@@ -102,6 +103,22 @@ export async function fetchProfiles(): Promise<Row[]> {
   const { data, error } = await getSupabase().from('profiles').select('*');
   fail('Could not load people', error);
   return data ?? [];
+}
+
+export async function fetchPlaces(): Promise<SavedPlace[]> {
+  const { data, error } = await getSupabase()
+    .from('places')
+    .select('*')
+    .eq('active', true)
+    .order('name');
+  fail('Could not load places', error);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    address: r.address,
+    ward: r.ward ?? undefined,
+    location: r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : undefined,
+  }));
 }
 
 export async function fetchVehicles(): Promise<Vehicle[]> {
