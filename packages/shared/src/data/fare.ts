@@ -47,7 +47,19 @@ export function amendedTotal(current: FareBreakdown, detour: RouteEstimate, tier
   return roundStep(current.total + extra);
 }
 
+// Kina is written symbol-first with no space: K12.40. Unknown codes fall back
+// to "CODE 12.40", which is ugly on purpose — it should be noticed and mapped.
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  PGK: 'K',
+  USD: '$',
+  AUD: 'A$',
+};
+
+/** The bare symbol, for icon tiles and chip labels that show no amount. */
+export function currencySymbol(currency: string = FARE_RATES.currency): string {
+  return CURRENCY_SYMBOLS[currency] ?? `${currency} `;
+}
+
 export function formatMoney(n: number, currency: string = FARE_RATES.currency): string {
-  const symbol = currency === 'USD' ? '$' : `${currency} `;
-  return `${symbol}${n.toFixed(2)}`;
+  return `${currencySymbol(currency)}${n.toFixed(2)}`;
 }

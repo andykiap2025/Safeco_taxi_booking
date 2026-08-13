@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DEFAULT_DIAL_CODE, TAGLINE } from '@safeco/shared';
+import { currencySymbol, DEFAULT_DIAL_CODE, TAGLINE } from '@safeco/shared';
 import { sendPhoneOtp, verifyPhoneOtp } from '@safeco/shared/auth';
 import {
   borders,
@@ -61,7 +61,7 @@ const CARVE_BOTTOM_ALPHA = 0.9;
 // teal fares / violet tracking / rose safety.
 const VALUE_PROPS = [
   {
-    icon: '$',
+    icon: currencySymbol(),
     title: 'Fixed fare before you book',
     subtitle: 'Quoted up front, itemised after',
     tint: colors.primary.base, // primary.light is too weak on the white jewel

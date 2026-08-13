@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   computeQuote,
+  currencySymbol,
   formatMoney,
   mockStore,
   tierById,
@@ -98,7 +99,7 @@ export function TierSelectScreen({ navigation }: ScreenProps<'TierSelect'>) {
         <GlassGroup style={{ marginTop: spacing.xl }}>
           <GlassListItem
             title="Visa · 4417"
-            icon="$"
+            icon={currencySymbol()}
             trailing={
               <LuminaText token="overline" color={colors.onSurface.muted}>
                 Change

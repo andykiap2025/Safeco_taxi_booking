@@ -6,17 +6,20 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatMoney, mockStore } from '@safeco/shared';
+import { currencySymbol, formatMoney, mockStore } from '@safeco/shared';
 import { borders, colors, radius, spacing, touchTarget } from '@safeco/shared/lumina';
 import { useMockState } from '@safeco/shared/components';
 import { GlassCard, LuminaText, NeuButton, ScreenContainer, withOpacity } from '@safeco/shared/ui';
 import { GhostButton, StarIcon } from '../ui';
 import type { ScreenProps } from '../navigation';
 
+// Labels derive from the active currency so they can never drift from it.
+// The AMOUNTS are still the design export's figures and want revisiting with
+// the Kina tariff — K1 is a smaller gesture than $1 was.
 const TIP_OPTIONS = [
-  { label: '$1', value: 1 },
-  { label: '$2', value: 2 },
-  { label: '$5', value: 5 },
+  { label: `${currencySymbol()}1`, value: 1 },
+  { label: `${currencySymbol()}2`, value: 2 },
+  { label: `${currencySymbol()}5`, value: 5 },
   { label: 'None', value: 0 },
 ];
 

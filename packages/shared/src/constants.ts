@@ -17,16 +17,22 @@ export const TIERS = [
   { id: 'xl', name: 'XL', description: 'Van / large vehicle', seats: 6, sortOrder: 2, fareMultiplier: 1.556 },
 ] as const;
 
-// Quote formula (calibrated to the design export's receipt: Go over
-// 4.2 km / 12 min = $12.40): (base + perKm·km + perMin·min) · tierMultiplier
-// + cityLevy, rounded to roundStep.
+// Quote formula: (base + perKm·km + perMin·min) · tierMultiplier + cityLevy,
+// rounded to roundStep. Currency is PNG Kina.
+//
+// ⚠ RATES ARE NOT YET TARIFFED FOR KINA. These figures were calibrated in the
+// design phase so a Go ride over 4.2 km / 12 min came to 12.40 in the export's
+// currency, which was USD. Switching the denomination to PGK (2026-08-13) did
+// NOT re-price anything: the same ride now quotes K12.40, roughly a quarter of
+// the previous real value. Set real Kina rates alongside the fleet/tier list
+// before taking a booking — see "Open decisions" in CLAUDE.md.
 export const FARE_RATES = {
   base: 4.5,
   perKm: 1.2,
   perMin: 0.18,
   cityLevy: 0.7,
   roundStep: 0.05,
-  currency: 'USD',
+  currency: 'PGK',
 } as const;
 
 // Job offers return to the queue if the driver doesn't confirm in time.

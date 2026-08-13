@@ -15,13 +15,17 @@ import {
   NeuButton,
   ScreenContainer,
 } from '@safeco/shared/ui';
-import { ROUTE } from '../ui';
+import { AIRPORT_ROUTE, ROUTE } from '../ui';
 import type { ScreenProps } from '../navigation';
 
 export function ScheduledScreen({ navigation }: ScreenProps<'Scheduled'>) {
   const insets = useSafeAreaInsets();
   const goFare = formatMoney(computeQuote(ROUTE, 'go').total);
   const shareFare = formatMoney(computeQuote(ROUTE, 'share').total);
+  // Was a hardcoded "$31.00" that never went through the fare engine, so it
+  // survived both the currency switch and every rate change. Quoted properly
+  // now, from the airport route.
+  const airportFare = formatMoney(computeQuote(AIRPORT_ROUTE, 'xl').total);
 
   return (
     <ScreenContainer
@@ -58,7 +62,9 @@ export function ScheduledScreen({ navigation }: ScreenProps<'Scheduled'>) {
             <LuminaText token="h2" style={{ flex: 1 }}>
               06:15
             </LuminaText>
-            <GlassBadge tone="primary">XL · $31.00 FIXED</GlassBadge>
+            <GlassBadge tone="primary">
+              {`XL · ${airportFare} FIXED`.toUpperCase()}
+            </GlassBadge>
           </View>
           <LuminaText token="body" style={{ marginTop: spacing.sm }}>
             14 Kingsway → International, T2
