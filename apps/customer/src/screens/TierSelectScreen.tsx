@@ -63,14 +63,13 @@ export function TierSelectScreen({ navigation, route }: ScreenProps<'TierSelect'
       // The quote sent here is the one the customer is looking at — the
       // fare-lock promise binds to what was on screen at the moment they
       // tapped, not to a recomputation afterwards.
+      // The server reprices this and refuses if it disagrees with `quote` —
+      // the figure on screen right now. The fare lock is enforced there, not
+      // here.
       const job = await createJob({
-        customerId: profile.id,
+        pickupPlaceId: pickup.id,
+        dropoffPlaceId: dropoff.id,
         tier: tierId,
-        pickup: { address: pickup.name, location: pickup.location },
-        dropoff: { address: dropoff.name, location: dropoff.location },
-        // Stored with the job so the receipt can itemise the same journey the
-        // fare was computed from.
-        route: journey,
         quotedFare: quote,
         noteToDriver: note.trim() || undefined,
       });

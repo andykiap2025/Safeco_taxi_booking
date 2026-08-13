@@ -343,9 +343,10 @@ create policy "jobs readable" on jobs for select to authenticated
     or public.is_dispatcher()
   );
 
+-- NO direct insert policy on jobs. Booking goes through book_ride(), which
+-- prices the ride server-side — see "Fare integrity" below. Granting insert
+-- here would restore the path where a client names its own fare.
 drop policy if exists "customers book own jobs" on jobs;
-create policy "customers book own jobs" on jobs for insert to authenticated
-  with check (customer_id = auth.uid());
 
 -- Update rights are role-shaped, not column-shaped: RLS cannot restrict which
 -- columns change. See the FARE INTEGRITY note at the foot of this file.
@@ -397,6 +398,186 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table profiles;
 exception when duplicate_object then null; end $$;
+
+-- ── Fare integrity: the server prices rides, not the client ─────────────────
+--
+-- RLS controls WHICH ROWS a user may write, never WHICH COLUMNS. So while
+-- customers could insert their own jobs directly, a crafted client could book
+-- a ride at any price it liked — the fare lock was enforced only by the app.
+--
+-- Booking now goes through book_ride(), which recomputes the fare from server
+-- config and rejects the request if the client's figure disagrees. The client
+-- still quotes locally for display; the mismatch check makes any drift loud
+-- instead of silently charging a different amount than the customer saw.
+
+create table if not exists fare_config (
+  id boolean primary key default true check (id), -- single row
+  base numeric(10,2) not null,
+  per_km numeric(10,2) not null,
+  per_min numeric(10,2) not null,
+  city_levy numeric(10,2) not null,
+  round_step numeric(10,2) not null,
+  currency text not null,
+  road_factor numeric(10,3) not null,
+  avg_speed_kmh numeric(10,2) not null,
+  min_distance_km numeric(10,2) not null
+);
+
+-- MUST mirror FARE_RATES and ROUTE_ESTIMATE in packages/shared/src/constants.ts.
+-- A difference here is not silent: book_ride rejects the booking.
+insert into fare_config (id, base, per_km, per_min, city_levy, round_step, currency,
+                         road_factor, avg_speed_kmh, min_distance_km)
+values (true, 4.50, 1.20, 0.18, 0.70, 0.05, 'PGK', 1.350, 26.00, 0.80)
+on conflict (id) do nothing;
+
+create table if not exists tier_rates (
+  id tier_id primary key,
+  seats int not null,
+  fare_multiplier numeric(10,4) not null,
+  sort_order int not null
+);
+
+-- Mirrors TIERS in constants.ts.
+insert into tier_rates (id, seats, fare_multiplier, sort_order) values
+  ('share', 2, 0.6410, 0),
+  ('go',    4, 1.0000, 1),
+  ('xl',    6, 1.5560, 2)
+on conflict (id) do update
+  set seats = excluded.seats,
+      fare_multiplier = excluded.fare_multiplier,
+      sort_order = excluded.sort_order;
+
+alter table fare_config enable row level security;
+alter table tier_rates enable row level security;
+
+drop policy if exists "fare config readable" on fare_config;
+create policy "fare config readable" on fare_config for select to authenticated using (true);
+drop policy if exists "tier rates readable" on tier_rates;
+create policy "tier rates readable" on tier_rates for select to authenticated using (true);
+-- No write policies: rates change by migration, never from an app.
+
+-- Great-circle km. Mirrors haversineKm in data/fare.ts.
+create or replace function public.distance_km(
+  lat1 double precision, lng1 double precision,
+  lat2 double precision, lng2 double precision
+) returns double precision
+language sql
+immutable
+as $$
+  select 2 * 6371 * asin(sqrt(
+    sin(radians(lat2 - lat1) / 2) ^ 2 +
+    sin(radians(lng2 - lng1) / 2) ^ 2 * cos(radians(lat1)) * cos(radians(lat2))
+  ));
+$$;
+
+-- The authoritative quote. Mirrors estimateRoute + computeQuote, including
+-- summing the total from the ROUNDED components so an itemised receipt adds up.
+create or replace function public.quote_ride(p_pickup uuid, p_dropoff uuid, p_tier tier_id)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  c fare_config%rowtype;
+  t tier_rates%rowtype;
+  a places%rowtype;
+  b places%rowtype;
+  straight double precision;
+  dist numeric;
+  mins numeric;
+  v_base numeric; v_dist numeric; v_time numeric;
+begin
+  select * into c from fare_config where id;
+  select * into t from tier_rates where id = p_tier;
+  select * into a from places where id = p_pickup and active;
+  select * into b from places where id = p_dropoff and active;
+
+  if a.id is null or b.id is null then
+    raise exception 'Unknown pickup or destination';
+  end if;
+  if a.lat is null or a.lng is null or b.lat is null or b.lng is null then
+    raise exception 'That journey has no map coordinates, so it cannot be priced';
+  end if;
+
+  straight := public.distance_km(a.lat, a.lng, b.lat, b.lng);
+  dist := round(greatest(c.min_distance_km, (straight * c.road_factor)::numeric), 1);
+  mins := greatest(1, round(dist / c.avg_speed_kmh * 60));
+
+  v_base := round((c.base * t.fare_multiplier) / c.round_step) * c.round_step;
+  v_dist := round((c.per_km * dist * t.fare_multiplier) / c.round_step) * c.round_step;
+  v_time := round((c.per_min * mins * t.fare_multiplier) / c.round_step) * c.round_step;
+
+  return jsonb_build_object(
+    'base', v_base, 'distance', v_dist, 'time', v_time, 'cityLevy', c.city_levy,
+    'total', v_base + v_dist + v_time + c.city_levy, 'currency', c.currency,
+    'route', jsonb_build_object('distanceKm', dist, 'durationMin', mins)
+  );
+end;
+$$;
+
+-- Books a ride at the SERVER's price.
+--
+-- p_expected_total is what the customer was shown. If it disagrees with the
+-- server's figure the booking is refused, so a client can never set its own
+-- fare and a genuine config drift surfaces as a visible error rather than an
+-- unexpected charge.
+create or replace function public.book_ride(
+  p_pickup uuid,
+  p_dropoff uuid,
+  p_tier tier_id,
+  p_expected_total numeric,
+  p_note text default null,
+  p_party_size int default null
+) returns jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  q jsonb;
+  j jobs%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Not signed in';
+  end if;
+
+  q := public.quote_ride(p_pickup, p_dropoff, p_tier);
+
+  if abs((q->>'total')::numeric - p_expected_total) > 0.001 then
+    raise exception 'The fare changed while you were booking (shown %, now %). Please try again.',
+      p_expected_total, (q->>'total')::numeric;
+  end if;
+
+  insert into jobs (customer_id, tier, pickup, dropoff, route, quoted_fare,
+                    note_to_driver, party_size, status)
+  values (
+    auth.uid(),
+    p_tier,
+    (select jsonb_build_object('address', name,
+       'location', case when lat is null then null
+                        else jsonb_build_object('lat', lat, 'lng', lng) end)
+     from places where id = p_pickup),
+    (select jsonb_build_object('address', name,
+       'location', case when lat is null then null
+                        else jsonb_build_object('lat', lat, 'lng', lng) end)
+     from places where id = p_dropoff),
+    q->'route',
+    q - 'route',
+    nullif(btrim(coalesce(p_note, '')), ''),
+    p_party_size,
+    'at_desk'
+  )
+  returning * into j;
+
+  insert into job_events (job_id, actor_id, event) values (j.id, auth.uid(), 'created');
+  return j;
+end;
+$$;
+
+grant execute on function public.quote_ride(uuid, uuid, tier_id) to authenticated;
+grant execute on function public.book_ride(uuid, uuid, tier_id, numeric, text, int) to authenticated;
 
 -- ── Known gaps, deliberately left to application/server work ────────────────
 --

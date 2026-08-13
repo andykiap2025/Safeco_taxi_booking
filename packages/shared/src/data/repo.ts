@@ -130,36 +130,43 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
 // ── Writes ──────────────────────────────────────────────────────────────────
 
 export interface CreateJobInput {
-  customerId: string;
+  /** Places from the service map — the server resolves addresses and
+   *  coordinates itself, so a client cannot book a journey that does not
+   *  exist or claim a shorter one than it charges for. */
+  pickupPlaceId: string;
+  dropoffPlaceId: string;
   tier: TierId;
-  pickup: Place;
-  dropoff: Place;
-  route?: { distanceKm: number; durationMin: number };
+  /** What the customer was shown. The server rejects the booking if its own
+   *  calculation disagrees. */
   quotedFare: FareBreakdown;
   noteToDriver?: string;
   partySize?: number;
 }
 
+/**
+ * Book a ride at the SERVER's price.
+ *
+ * Goes through the book_ride RPC rather than inserting directly: RLS can
+ * restrict which rows a customer writes but not which columns, so a direct
+ * insert let a crafted client name its own fare. The server recomputes from
+ * its own config and refuses the booking if `expectedTotal` — the figure the
+ * customer was actually shown — disagrees.
+ *
+ * That mismatch is a feature. If the app's rates ever drift from the
+ * database's, the customer sees an explicit "the fare changed, try again"
+ * rather than being quietly charged something other than what was on screen.
+ */
 export async function createJob(input: CreateJobInput): Promise<JobRequest> {
-  const { data, error } = await getSupabase()
-    .from('jobs')
-    .insert({
-      customer_id: input.customerId,
-      tier: input.tier,
-      pickup: input.pickup,
-      dropoff: input.dropoff,
-      route: input.route ?? null,
-      quoted_fare: input.quotedFare,
-      note_to_driver: input.noteToDriver ?? null,
-      party_size: input.partySize ?? null,
-      status: 'at_desk',
-    })
-    .select()
-    .single();
+  const { data, error } = await getSupabase().rpc('book_ride', {
+    p_pickup: input.pickupPlaceId,
+    p_dropoff: input.dropoffPlaceId,
+    p_tier: input.tier,
+    p_expected_total: input.quotedFare.total,
+    p_note: input.noteToDriver ?? null,
+    p_party_size: input.partySize ?? null,
+  });
   fail('Could not create the booking', error);
-  const job = toJob(data!);
-  void logJobEvent(job.id, input.customerId, 'created');
-  return job;
+  return toJob(data as Row);
 }
 
 /**
