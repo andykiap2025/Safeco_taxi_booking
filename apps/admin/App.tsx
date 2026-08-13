@@ -3,6 +3,7 @@
 // side by side; narrower windows get a Queue → Assign stack. Both compose the
 // same DeskHeader / QueuePane / AssignPane.
 
+import { useEffect } from 'react';
 import {
   SourceSerif4_400Regular,
   SourceSerif4_400Regular_Italic,
@@ -14,9 +15,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useWindowDimensions } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initSupabaseNative } from '@safeco/shared/native';
-import { ConfigErrorScreen } from '@safeco/shared/ui';
+import { signOut, startAuthWatch, useAuth } from '@safeco/shared/auth';
+import { startLiveSync, stopLiveSync } from '@safeco/shared';
+import { AccessDeniedScreen, ConfigErrorScreen } from '@safeco/shared/ui';
 import { NarrowNavigator } from './src/navigation';
 import { WideConsole } from './src/panes/WideConsole';
+import { SignInScreen } from './src/screens/SignInScreen';
 
 const WIDE_BREAKPOINT = 900;
 
@@ -41,13 +45,45 @@ export default function App() {
     SourceSerif4_700Bold,
   });
   const { width } = useWindowDimensions();
+  const { stage, profile } = useAuth();
+  const isDispatcher = profile?.role === 'dispatcher';
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    if (stage !== 'ready' || !isDispatcher) return;
+    void startLiveSync();
+    return () => stopLiveSync();
+  }, [stage, isDispatcher]);
 
   if (configError) {
     return (
       <SafeAreaProvider>
         <ConfigErrorScreen app="Office console" message={configError.message} />
+      </SafeAreaProvider>
+    );
+  }
+
+  // 'loading' is a restoring session, not a signed-out one.
+  if (!fontsLoaded || stage === 'loading') return null;
+
+  if (stage === 'signedOut') {
+    return (
+      <SafeAreaProvider>
+        <SignInScreen />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Signed in, wrong role — including 'needsProfile'. The desk sees every job
+  // and the whole roster, so this gate is the boundary protecting all of it.
+  if (!isDispatcher) {
+    return (
+      <SafeAreaProvider>
+        <AccessDeniedScreen
+          app="Safeco Office"
+          requires="a dispatcher account"
+          currentRole={profile?.role}
+          onSignOut={() => void signOut()}
+        />
       </SafeAreaProvider>
     );
   }

@@ -20,10 +20,11 @@ import { Pressable, ScrollView, View } from 'react-native';
 import {
   UPGRADE_AT_QUOTE,
   formatMoney,
-  mockStore,
+  offerJob,
   tierById,
   upgradeCandidateTier,
 } from '@safeco/shared';
+import { useAuth } from '@safeco/shared/auth';
 import {
   borders,
   colors,
@@ -37,6 +38,7 @@ import {
   GlassBadge,
   GlassCard,
   GlassGroup,
+  InlineError,
   LuminaText,
   NeuButton,
   SurfaceProvider,
@@ -192,10 +194,12 @@ function CandidateRow({ candidate, selected, disabled, flagged, last, onPress }:
 
 export function AssignPane({ jobId, onClose }: AssignPaneProps) {
   const state = useAppState((s) => s);
+  const { profile } = useAuth();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showOtherTiers, setShowOtherTiers] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // The offer-confirm timer must finish its store work even if this pane
   // unmounts mid-flight; only the UI close is gated on being mounted.
@@ -242,21 +246,32 @@ export function AssignPane({ jobId, onClose }: AssignPaneProps) {
   const needsAck = selection?.kind === 'mismatch';
   const canAssign = !!selection && !sent && (!needsAck || acknowledged);
 
-  const assign = () => {
-    if (!selection || sent) return;
-    mockStore.offerJob(
-      job.id,
-      selection.driverId,
-      selection.vehicleId,
-      selection.kind === 'upgrade' ? { upgradeApplied: true } : undefined,
-    );
+  const assign = async () => {
+    if (!selection || sent || !profile) return;
+    setError(null);
     setSent(true);
-    // Simulated driver: confirms after ~4s, then the job leaves the queue.
-    setTimeout(() => {
-      mockStore.driverConfirm(job.id);
-      if (mounted.current) onClose();
-    }, 4000);
+    try {
+      await offerJob(
+        job.id,
+        selection.driverId,
+        selection.vehicleId,
+        profile.id,
+        selection.kind === 'upgrade' ? { upgradeApplied: true } : undefined,
+      );
+      // No simulated confirm here any more. A real driver accepts from their
+      // own phone; the effect below closes this pane when they do, or when the
+      // job returns to the queue because they declined or ran out of time.
+    } catch (e) {
+      setSent(false); // the offer never left — let the desk try again
+      setError((e as Error).message);
+    }
   };
+
+  // The job left 'offered' — the driver answered, one way or the other.
+  useEffect(() => {
+    if (!sent) return;
+    if (job && job.status !== 'offered' && mounted.current) onClose();
+  }, [sent, job?.status, onClose]);
 
   const assignTitle = sent
     ? 'Sent · awaiting confirm'
@@ -466,6 +481,14 @@ export function AssignPane({ jobId, onClose }: AssignPaneProps) {
             </Pressable>
           </GlassCard>
         </View>
+      ) : null}
+
+      {error ? (
+        <InlineError
+          title="Could not send the job"
+          message={error}
+          style={{ marginTop: spacing.md }}
+        />
       ) : null}
 
       <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl }}>

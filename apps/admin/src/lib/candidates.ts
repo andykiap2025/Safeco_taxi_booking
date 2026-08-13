@@ -3,19 +3,28 @@
 // (vehiclesForTier / isMismatch) so the desk rules live in one place.
 
 import { isMismatch, vehiclesForTier } from '@safeco/shared';
-import type { DriverProfile, JobRequest, MockState, TierId, Vehicle } from '@safeco/shared';
+import type { AppState, DriverProfile, JobRequest, TierId, Vehicle } from '@safeco/shared';
 
 export interface Candidate {
   driver: DriverProfile;
   vehicle: Vehicle;
-  etaMinutes: number; // fake ETA: 3 / 6 / 9 min by index until live telemetry lands
+  etaMinutes: number; // PLACEHOLDER: 3 / 6 / 9 by index until live telemetry lands
   mismatch: boolean;
 }
 
-const BUSY_STATUSES: JobRequest['status'][] = ['offered', 'arriving', 'on_trip'];
+// Every state in which a driver is already committed to a job. 'assigned' and
+// 'at_pickup' belong here: a driver waiting at a kerb for their rider to board
+// is not available, and offering them a second job would double-book them.
+const BUSY_STATUSES: JobRequest['status'][] = [
+  'offered',
+  'assigned',
+  'arriving',
+  'at_pickup',
+  'on_trip',
+];
 
 // A driver+vehicle pair is free when neither half is attached to a live job.
-export function freeCandidates(state: MockState, job: JobRequest): Candidate[] {
+export function freeCandidates(state: AppState, job: JobRequest): Candidate[] {
   const busyDrivers = new Set<string>();
   const busyVehicles = new Set<string>();
   for (const j of state.jobs) {
@@ -51,5 +60,7 @@ export function queuedJobs(jobs: JobRequest[]): JobRequest[] {
 }
 
 export function runningJobs(jobs: JobRequest[]): JobRequest[] {
-  return jobs.filter((j) => j.status === 'arriving' || j.status === 'on_trip');
+  return jobs.filter(
+    (j) => j.status === 'assigned' || j.status === 'arriving' || j.status === 'at_pickup' || j.status === 'on_trip',
+  );
 }

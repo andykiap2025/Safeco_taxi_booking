@@ -22,7 +22,6 @@ import {
   withOpacity,
 } from '@safeco/shared/ui';
 import { queuedJobs, runningJobs } from '../lib/candidates';
-import { useQueueTick } from '../lib/useQueueTick';
 
 export interface QueuePaneProps {
   selectedJobId?: string;
@@ -127,7 +126,6 @@ function QueueRow({ job, waitSeconds, selected, onPress, last }: QueueRowProps) 
 }
 
 export function QueuePane({ selectedJobId, onSelectJob }: QueuePaneProps) {
-  useQueueTick();
   const jobs = useAppState((s) => s.jobs);
   const waits = useAppState((s) => s.waits);
   const drivers = useAppState((s) => s.drivers);
